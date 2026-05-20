@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "962156640444",
+    "project_id": "careu-48535",
+    "storage_bucket": "careu-48535.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:962156640444:android:5e99cd8e4c2fff3c56f8b9",
+        "android_client_info": {
+          "package_name": "com.example.care_u"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD4oqVP9XY5OCJ8D3DM3IOJFEpyo22RiPo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
