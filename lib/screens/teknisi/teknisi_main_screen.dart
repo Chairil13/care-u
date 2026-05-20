@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../../providers/chat_provider.dart';
+import '../../providers/checklist_provider.dart';
 import '../../models/user_model.dart';
 import '../chat/chat_detail_screen.dart';
 
 import 'teknisi_home_screen.dart';
 import 'teknisi_profile_screen.dart';
+import 'teknisi_checklist_screen.dart';
 
 class TeknisiMainScreen extends StatefulWidget {
   const TeknisiMainScreen({super.key});
@@ -20,7 +22,7 @@ class _TeknisiMainScreenState extends State<TeknisiMainScreen> {
 
   final List<Widget> _screens = [
     const TeknisiHomeScreen(),
-    const _ChecklistPlaceholder(),
+    const TeknisiChecklistScreen(),
     const _ChatPlaceholder(),
     const TeknisiProfileScreen(),
   ];
@@ -49,6 +51,8 @@ class _TeknisiMainScreenState extends State<TeknisiMainScreen> {
   }
 
   Widget _buildBottomNav() {
+    final hasBadge = context.watch<ChecklistProvider>().hasNewChecklist;
+    final chatHasBadge = context.watch<ChatProvider>().hasUnreadMessages;
     return Container(
       decoration: const BoxDecoration(
         color: Color(0xFFF4EBD0),
@@ -67,12 +71,14 @@ class _TeknisiMainScreenState extends State<TeknisiMainScreen> {
             'Checklist',
             Icons.fact_check_rounded,
             _selectedIndex == 1,
+            showBadge: hasBadge,
           ),
           _buildNavItem(
             2,
             'Chat',
             Icons.chat_bubble_rounded,
             _selectedIndex == 2,
+            showBadge: chatHasBadge,
           ),
           _buildNavItem(
             3,
@@ -85,12 +91,17 @@ class _TeknisiMainScreenState extends State<TeknisiMainScreen> {
     );
   }
 
-  Widget _buildNavItem(int index, String label, IconData icon, bool isActive) {
+  Widget _buildNavItem(int index, String label, IconData icon, bool isActive, {bool showBadge = false}) {
     return GestureDetector(
       onTap: () {
         setState(() {
           _selectedIndex = index;
         });
+        if (index == 1) {
+          context.read<ChecklistProvider>().clearNewChecklistIndicator();
+        } else if (index == 2) {
+          context.read<ChatProvider>().clearUnreadIndicator();
+        }
       },
       behavior: HitTestBehavior.opaque,
       child: AnimatedContainer(
@@ -109,10 +120,29 @@ class _TeknisiMainScreenState extends State<TeknisiMainScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              icon,
-              color: isActive ? Colors.white : const Color(0xFF2C1810),
-              size: 24,
+            Stack(
+              clipBehavior: Clip.none,
+              children: [
+                Icon(
+                  icon,
+                  color: isActive ? Colors.white : const Color(0xFF2C1810),
+                  size: 24,
+                ),
+                if (showBadge)
+                  Positioned(
+                    right: -2,
+                    top: -2,
+                    child: Container(
+                      width: 10,
+                      height: 10,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFD9614C), // Retro Red
+                        shape: BoxShape.circle,
+                        border: Border.all(color: const Color(0xFF2C1810), width: 1.5),
+                      ),
+                    ),
+                  ),
+              ],
             ),
             const SizedBox(height: 2),
             Text(
@@ -130,99 +160,6 @@ class _TeknisiMainScreenState extends State<TeknisiMainScreen> {
   }
 }
 
-// ── Checklist Placeholder ──
-class _ChecklistPlaceholder extends StatelessWidget {
-  const _ChecklistPlaceholder();
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.transparent,
-      body: SafeArea(
-        child: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Container(
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  color: const Color(0xFF4A90D9),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: const Color(0xFF2C1810), width: 4),
-                  boxShadow: const [
-                    BoxShadow(
-                      color: Color(0xFF2C1810),
-                      offset: Offset(8, 8),
-                    ),
-                  ],
-                ),
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                child: Text(
-                  'FORM CHECKLIST',
-                  textAlign: TextAlign.center,
-                  style: GoogleFonts.plusJakartaSans(
-                    fontWeight: FontWeight.w900,
-                    fontSize: 18,
-                    color: Colors.white,
-                    letterSpacing: 1,
-                  ),
-                ),
-              ),
-            ),
-            Expanded(
-              child: Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(24),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF4EBD0),
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: const Color(0xFF2C1810),
-                          width: 4,
-                        ),
-                        boxShadow: const [
-                          BoxShadow(
-                            color: Color(0xFF2C1810),
-                            offset: Offset(4, 4),
-                          ),
-                        ],
-                      ),
-                      child: const Icon(
-                        Icons.fact_check_rounded,
-                        size: 64,
-                        color: Color(0xFF2C1810),
-                      ),
-                    ),
-                    const SizedBox(height: 32),
-                    Text(
-                      'FORM CHECKLIST',
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w900,
-                        color: const Color(0xFF2C1810),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Fitur form pengecekan motor segera hadir.',
-                      style: GoogleFonts.plusJakartaSans(
-                        fontWeight: FontWeight.w700,
-                        color: const Color(0xFF2C1810).withValues(alpha: 0.6),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
 
 // ── Chat Placeholder ──
 class _ChatPlaceholder extends StatefulWidget {

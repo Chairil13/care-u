@@ -18,6 +18,16 @@ class ChatProvider extends ChangeNotifier {
   StreamSubscription<List<Map<String, dynamic>>>? _messagesStreamSubscription;
   final Set<String> _notifiedMessageIds = {};
   bool _isFirstEmit = true;
+  bool _hasUnreadMessages = false;
+
+  bool get hasUnreadMessages => _hasUnreadMessages;
+
+  void clearUnreadIndicator() {
+    if (_hasUnreadMessages) {
+      _hasUnreadMessages = false;
+      notifyListeners();
+    }
+  }
 
   ChatProvider() {
     _initGlobalMessageListener();
@@ -115,6 +125,8 @@ class ChatProvider extends ChangeNotifier {
                 !_notifiedMessageIds.contains(id)) {
               
               _notifiedMessageIds.add(id);
+              _hasUnreadMessages = true;
+              notifyListeners();
               debugPrint('ChatProvider: Message qualifies for notification! Fetching sender details...');
 
               // Fetch sender info

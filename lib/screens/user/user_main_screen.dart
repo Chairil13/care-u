@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../../providers/chat_provider.dart';
+import '../../providers/checklist_provider.dart';
 import '../../models/user_model.dart';
 import '../chat/chat_detail_screen.dart';
 
 import 'user_home_screen.dart';
 import 'user_profile_screen.dart';
+import 'user_checklist_screen.dart';
 
 class UserMainScreen extends StatefulWidget {
   const UserMainScreen({super.key});
@@ -29,7 +31,7 @@ class _UserMainScreenState extends State<UserMainScreen> {
           _selectedIndex = index;
         });
       }),
-      const ChecklistPlaceholder(),
+      const UserChecklistScreen(),
       const ChatPlaceholder(),
       const UserProfileScreen(),
     ];
@@ -59,6 +61,8 @@ class _UserMainScreenState extends State<UserMainScreen> {
   }
 
   Widget _buildBottomNav() {
+    final hasBadge = context.watch<ChecklistProvider>().hasNewChecklist;
+    final chatHasBadge = context.watch<ChatProvider>().hasUnreadMessages;
     return Container(
       decoration: const BoxDecoration(
         color: Color(0xFFF4EBD0), // Vintage Paper
@@ -77,12 +81,14 @@ class _UserMainScreenState extends State<UserMainScreen> {
             'Checklist',
             Icons.fact_check_rounded,
             _selectedIndex == 1,
+            showBadge: hasBadge,
           ),
           _buildNavItem(
             2,
             'Chat',
             Icons.chat_bubble_rounded,
             _selectedIndex == 2,
+            showBadge: chatHasBadge,
           ),
           _buildNavItem(
             3,
@@ -95,12 +101,17 @@ class _UserMainScreenState extends State<UserMainScreen> {
     );
   }
 
-  Widget _buildNavItem(int index, String label, IconData icon, bool isActive) {
+  Widget _buildNavItem(int index, String label, IconData icon, bool isActive, {bool showBadge = false}) {
     return GestureDetector(
       onTap: () {
         setState(() {
           _selectedIndex = index;
         });
+        if (index == 1) {
+          context.read<ChecklistProvider>().clearNewChecklistIndicator();
+        } else if (index == 2) {
+          context.read<ChatProvider>().clearUnreadIndicator();
+        }
       },
       behavior: HitTestBehavior.opaque,
       child: AnimatedContainer(
@@ -119,7 +130,26 @@ class _UserMainScreenState extends State<UserMainScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, color: const Color(0xFF2C1810), size: 24),
+            Stack(
+              clipBehavior: Clip.none,
+              children: [
+                Icon(icon, color: const Color(0xFF2C1810), size: 24),
+                if (showBadge)
+                  Positioned(
+                    right: -2,
+                    top: -2,
+                    child: Container(
+                      width: 10,
+                      height: 10,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFD9614C), // Retro Red
+                        shape: BoxShape.circle,
+                        border: Border.all(color: const Color(0xFF2C1810), width: 1.5),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
             const SizedBox(height: 2),
             Text(
               label,
