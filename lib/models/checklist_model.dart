@@ -93,6 +93,7 @@ class ChecklistResultModel {
   // Joined fields
   final String? userName;
   final String? formJudul;
+  final String? formDeskripsi;
 
   ChecklistResultModel({
     required this.id,
@@ -103,6 +104,7 @@ class ChecklistResultModel {
     this.createdAt,
     this.userName,
     this.formJudul,
+    this.formDeskripsi,
   });
 
   factory ChecklistResultModel.fromJson(Map<String, dynamic> json) {
@@ -112,8 +114,10 @@ class ChecklistResultModel {
     }
 
     String? formJudul;
+    String? formDeskripsi;
     if (json['form_checklist'] != null && json['form_checklist'] is Map) {
       formJudul = json['form_checklist']['judul'] as String?;
+      formDeskripsi = json['form_checklist']['deskripsi'] as String?;
     }
 
     return ChecklistResultModel(
@@ -127,6 +131,7 @@ class ChecklistResultModel {
           : null,
       userName: userName,
       formJudul: formJudul,
+      formDeskripsi: formDeskripsi,
     );
   }
 

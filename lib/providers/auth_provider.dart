@@ -297,15 +297,36 @@ class AuthProvider extends ChangeNotifier {
   }
 
   /// Update Password
-  Future<bool> updatePassword({required String newPassword}) async {
+  Future<bool> updatePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
     _setLoading(true);
     _errorMessage = null;
 
     try {
+      final email = _currentUser?.email;
+      if (email == null || email.isEmpty) {
+        _errorMessage = 'Email tidak ditemukan.';
+        return false;
+      }
+
+      // Verify current password by signing in
+      await _supabase.auth.signInWithPassword(
+        email: email,
+        password: currentPassword,
+      );
+
+      // If sign in is successful, update to new password
       await _supabase.auth.updateUser(UserAttributes(password: newPassword));
       return true;
     } on AuthException catch (e) {
-      _errorMessage = _parseAuthError(e.message);
+      if (e.message.toLowerCase().contains('invalid login credentials') ||
+          e.message.toLowerCase().contains('invalid credentials')) {
+        _errorMessage = 'Password saat ini salah.';
+      } else {
+        _errorMessage = _parseAuthError(e.message);
+      }
       return false;
     } catch (e) {
       _errorMessage = 'Terjadi kesalahan saat update password.';

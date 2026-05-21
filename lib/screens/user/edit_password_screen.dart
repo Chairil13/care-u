@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 
 import '../../providers/auth_provider.dart';
+import '../auth/login_screen.dart';
 
 class EditPasswordScreen extends StatefulWidget {
   const EditPasswordScreen({super.key});
@@ -13,13 +14,16 @@ class EditPasswordScreen extends StatefulWidget {
 
 class _EditPasswordScreenState extends State<EditPasswordScreen> {
   final _formKey = GlobalKey<FormState>();
+  final _currentPasswordController = TextEditingController();
   final _newPasswordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
+  bool _obscureCurrent = true;
   bool _obscureNew = true;
   bool _obscureConfirm = true;
 
   @override
   void dispose() {
+    _currentPasswordController.dispose();
     _newPasswordController.dispose();
     _confirmPasswordController.dispose();
     super.dispose();
@@ -31,6 +35,7 @@ class _EditPasswordScreenState extends State<EditPasswordScreen> {
     final authProvider = context.read<AuthProvider>();
 
     final success = await authProvider.updatePassword(
+      currentPassword: _currentPasswordController.text,
       newPassword: _newPasswordController.text,
     );
 
@@ -39,11 +44,17 @@ class _EditPasswordScreenState extends State<EditPasswordScreen> {
     if (success) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Password updated successfully'),
+          content: Text('Password updated successfully. Please login again.'),
           backgroundColor: Color(0xFF00685E),
         ),
       );
-      Navigator.of(context).pop();
+      await authProvider.signOut();
+      if (mounted) {
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (_) => const LoginScreen()),
+          (route) => false,
+        );
+      }
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -164,6 +175,25 @@ class _EditPasswordScreenState extends State<EditPasswordScreen> {
                             ),
                           ),
                           const SizedBox(height: 32),
+
+                          // Current Password
+                          _buildPasswordField(
+                            controller: _currentPasswordController,
+                            label: 'CURRENT PASSWORD',
+                            obscureText: _obscureCurrent,
+                            onToggleVisibility: () {
+                              setState(() {
+                                _obscureCurrent = !_obscureCurrent;
+                              });
+                            },
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return 'Please enter your current password';
+                              }
+                              return null;
+                            },
+                          ),
+                          const SizedBox(height: 20),
 
                           // New Password
                           _buildPasswordField(

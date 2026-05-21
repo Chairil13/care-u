@@ -12,6 +12,7 @@ import 'providers/admin_provider.dart';
 import 'providers/teknisi_provider.dart';
 import 'providers/chat_provider.dart';
 import 'providers/checklist_provider.dart';
+import 'providers/story_provider.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/user/user_main_screen.dart';
 import 'screens/teknisi/teknisi_main_screen.dart';
@@ -52,6 +53,7 @@ class CareUApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => TeknisiProvider()),
         ChangeNotifierProvider(create: (_) => ChatProvider(), lazy: false),
         ChangeNotifierProvider(create: (_) => ChecklistProvider()),
+        ChangeNotifierProvider(create: (_) => StoryProvider()),
       ],
       child: MaterialApp(
         title: 'CareU - Motor Care Companion',

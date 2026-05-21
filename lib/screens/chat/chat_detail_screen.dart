@@ -1403,9 +1403,13 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                 if (imageUrl != null) ...[
                   GestureDetector(
                     onTap: () {
+                      final isStoryReply = text.contains('Membalas story:');
                       Navigator.of(context).push(
                         MaterialPageRoute(
-                          builder: (context) => FullScreenImageViewer(imageUrl: imageUrl),
+                          builder: (context) => FullScreenImageViewer(
+                            imageUrl: imageUrl,
+                            isStoryReply: isStoryReply,
+                          ),
                         ),
                       );
                     },
@@ -1432,6 +1436,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                             );
                           },
                           errorBuilder: (context, error, stackTrace) {
+                            final isStoryReply = text.contains('Membalas story:');
                             return Container(
                               height: 150,
                               width: 200,
@@ -1442,7 +1447,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                                   const Icon(Icons.error_outline_rounded, color: Color(0xFFD9614C), size: 36),
                                   const SizedBox(height: 8),
                                   Text(
-                                    'Gagal memuat gambar',
+                                    isStoryReply ? 'Story telah dihapus' : 'Gagal memuat gambar',
                                     style: GoogleFonts.plusJakartaSans(
                                       fontWeight: FontWeight.w700,
                                       fontSize: 12,
@@ -1577,8 +1582,13 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
 
 class FullScreenImageViewer extends StatelessWidget {
   final String imageUrl;
+  final bool isStoryReply;
 
-  const FullScreenImageViewer({super.key, required this.imageUrl});
+  const FullScreenImageViewer({
+    super.key,
+    required this.imageUrl,
+    this.isStoryReply = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -1614,7 +1624,7 @@ class FullScreenImageViewer extends StatelessWidget {
                   const Icon(Icons.error_outline_rounded, color: Color(0xFFD9614C), size: 48),
                   const SizedBox(height: 16),
                   Text(
-                    'Gagal memuat gambar',
+                    isStoryReply ? 'Story telah dihapus' : 'Gagal memuat gambar',
                     style: GoogleFonts.plusJakartaSans(
                       fontWeight: FontWeight.w800,
                       color: const Color(0xFFF4EBD0),

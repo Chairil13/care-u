@@ -19,6 +19,7 @@ class ChecklistProvider extends ChangeNotifier {
   bool _isFirstFormEmit = true;
   bool _isFirstResultEmit = true;
   final Set<String> _notifiedResultFeedbacks = {};
+  final Map<String, String> _notifiedResultAnswers = {};
 
   bool get hasNewChecklist => _hasNewChecklist;
 
@@ -51,6 +52,8 @@ class ChecklistProvider extends ChangeNotifier {
     _unsubscribeRealtime();
     _isFirstFormEmit = true;
     _isFirstResultEmit = true;
+    _notifiedResultFeedbacks.clear();
+    _notifiedResultAnswers.clear();
 
     try {
       final userData = await _supabase
@@ -124,6 +127,8 @@ class ChecklistProvider extends ChangeNotifier {
                     message: 'Teknisi memberikan feedback untuk "${form.judul}"!',
                     icon: Icons.feedback_rounded,
                   );
+
+                  fetchResults(isTeknisi: false, silent: true);
                 }
               }
             });
@@ -135,36 +140,54 @@ class ChecklistProvider extends ChangeNotifier {
             .listen((List<Map<String, dynamic>> maps) async {
               debugPrint('ChecklistProvider: Result stream fired, items count: ${maps.length}');
               if (_isFirstResultEmit) {
+                for (final map in maps) {
+                  final id = map['id'] as String;
+                  final jawaban = map['jawaban'];
+                  _notifiedResultAnswers[id] = jawaban != null ? jawaban.toString() : '';
+                }
                 _isFirstResultEmit = false;
                 return;
               }
 
-              _hasNewChecklist = true;
-              notifyListeners();
+              for (final map in maps) {
+                final id = map['id'] as String;
+                final jawaban = map['jawaban'];
+                final jawabanStr = jawaban != null ? jawaban.toString() : '';
+                final senderId = map['user_id'] as String?;
 
-              String userName = 'Mahasiswi';
-              if (maps.isNotEmpty) {
-                final latestMap = maps.last;
-                final senderId = latestMap['user_id'] as String?;
-                if (senderId != null) {
-                  try {
-                    final userResponse = await _supabase
-                        .from('users')
-                        .select('name')
-                        .eq('id', senderId)
-                        .maybeSingle();
-                    if (userResponse != null) {
-                      userName = userResponse['name'] as String? ?? 'Mahasiswi';
-                    }
-                  } catch (_) {}
+                final isNew = !_notifiedResultAnswers.containsKey(id);
+                final isUpdated = !isNew && _notifiedResultAnswers[id] != jawabanStr;
+
+                if (isNew || isUpdated) {
+                  _notifiedResultAnswers[id] = jawabanStr;
+                  _hasNewChecklist = true;
+                  notifyListeners();
+
+                  String userName = 'Mahasiswi';
+                  if (senderId != null) {
+                    try {
+                      final userResponse = await _supabase
+                          .from('users')
+                          .select('name')
+                          .eq('id', senderId)
+                          .maybeSingle();
+                      if (userResponse != null) {
+                        userName = userResponse['name'] as String? ?? 'Mahasiswi';
+                      }
+                    } catch (_) {}
+                  }
+
+                  _showInAppNotification(
+                    title: isNew ? 'Hasil Checklist Baru' : 'Checklist Diperbarui',
+                    message: isNew 
+                        ? 'Ada hasil checklist baru masuk dari $userName!'
+                        : '$userName memperbarui hasil checklist-nya!',
+                    icon: Icons.fact_check_rounded,
+                  );
+
+                  fetchResults(isTeknisi: true, silent: true);
                 }
               }
-
-              _showInAppNotification(
-                title: 'Hasil Checklist Baru',
-                message: 'Ada hasil checklist baru masuk dari $userName!',
-                icon: Icons.fact_check_rounded,
-              );
             });
       }
     } catch (e) {
@@ -312,14 +335,60 @@ class ChecklistProvider extends ChangeNotifier {
     }
   }
 
+  /// Update an existing checklist form with items
+  Future<bool> updateForm({
+    required String formId,
+    required String judul,
+    required String deskripsi,
+    required List<String> itemNames,
+  }) async {
+    _setLoading(true);
+    try {
+      // 1. Update form checklist
+      await _supabase
+          .from('form_checklist')
+          .update({
+            'judul': judul,
+            'deskripsi': deskripsi,
+          })
+          .eq('id', formId);
+
+      // 2. Delete existing items
+      await _supabase.from('checklist_items').delete().eq('form_id', formId);
+
+      // 3. Insert new items
+      if (itemNames.isNotEmpty) {
+        final List<Map<String, dynamic>> itemsToInsert = itemNames
+            .map((name) => {
+                  'form_id': formId,
+                  'item_name': name,
+                })
+            .toList();
+
+        await _supabase.from('checklist_items').insert(itemsToInsert);
+      }
+
+      await fetchForms();
+      return true;
+    } catch (e) {
+      _errorMessage = 'Gagal memperbarui form: $e';
+      debugPrint(_errorMessage);
+      return false;
+    } finally {
+      _setLoading(false);
+    }
+  }
+
   /// Fetch checklist results (all for technician, or own for user)
-  Future<void> fetchResults({bool isTeknisi = false}) async {
+  Future<void> fetchResults({bool isTeknisi = false, bool silent = false}) async {
     final user = _supabase.auth.currentUser;
     if (user == null) return;
 
-    _isLoading = true;
-    _errorMessage = null;
-    Future.microtask(() => notifyListeners());
+    if (!silent) {
+      _isLoading = true;
+      _errorMessage = null;
+      Future.microtask(() => notifyListeners());
+    }
 
     try {
       var query = _supabase
@@ -336,10 +405,14 @@ class ChecklistProvider extends ChangeNotifier {
           .map((json) => ChecklistResultModel.fromJson(json))
           .toList();
     } catch (e) {
-      _errorMessage = 'Gagal memuat riwayat checklist: $e';
-      debugPrint(_errorMessage);
+      if (!silent) {
+        _errorMessage = 'Gagal memuat riwayat checklist: $e';
+      }
+      debugPrint('Error fetching results: $e');
     } finally {
-      _isLoading = false;
+      if (!silent) {
+        _isLoading = false;
+      }
       notifyListeners();
     }
   }

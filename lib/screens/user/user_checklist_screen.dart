@@ -738,6 +738,47 @@ class _UserChecklistScreenState extends State<UserChecklistScreen> {
                   color: const Color(0xFF2C1810).withValues(alpha: 0.7),
                 ),
               ),
+              if (result.formDeskripsi != null && result.formDeskripsi!.isNotEmpty) ...[
+                const SizedBox(height: 10),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF4A90D9).withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: const Color(0xFF4A90D9).withValues(alpha: 0.3), width: 1.5),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          const Icon(Icons.info_outline_rounded, size: 14, color: Color(0xFF4A90D9)),
+                          const SizedBox(width: 6),
+                          Text(
+                            'CARA PENGECEKAN:',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontWeight: FontWeight.w900,
+                              fontSize: 10,
+                              color: const Color(0xFF4A90D9),
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        result.formDeskripsi!,
+                        style: GoogleFonts.plusJakartaSans(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 12,
+                          color: const Color(0xFF2C1810),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
               const SizedBox(height: 16),
               Flexible(
                 child: SingleChildScrollView(
@@ -1014,6 +1055,50 @@ class _FillChecklistScreenState extends State<FillChecklistScreen> {
                     ),
                   ),
                 ),
+
+                // Deskripsi / Cara Pengecekan
+                if (widget.form.deskripsi != null && widget.form.deskripsi!.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF4A90D9).withValues(alpha: 0.08),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: const Color(0xFF4A90D9).withValues(alpha: 0.3), width: 2),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              const Icon(Icons.info_outline_rounded, size: 16, color: Color(0xFF4A90D9)),
+                              const SizedBox(width: 8),
+                              Text(
+                                'CARA PENGECEKAN:',
+                                style: GoogleFonts.plusJakartaSans(
+                                  fontWeight: FontWeight.w900,
+                                  fontSize: 11,
+                                  color: const Color(0xFF4A90D9),
+                                  letterSpacing: 0.5,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            widget.form.deskripsi!,
+                            style: GoogleFonts.plusJakartaSans(
+                              fontWeight: FontWeight.w700,
+                              fontSize: 13,
+                              color: const Color(0xFF2C1810),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
 
                 Expanded(
                   child: ListView.builder(

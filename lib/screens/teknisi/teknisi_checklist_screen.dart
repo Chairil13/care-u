@@ -257,13 +257,26 @@ class _TeknisiChecklistScreenState extends State<TeknisiChecklistScreen> {
                                     letterSpacing: 1,
                                   ),
                                 ),
-                                GestureDetector(
-                                  onTap: () => _confirmDeleteForm(form.id),
-                                  child: const Icon(
-                                    Icons.delete_forever_rounded,
-                                    color: Color(0xFFD9614C), // Retro Red
-                                    size: 20,
-                                  ),
+                                Row(
+                                  children: [
+                                    GestureDetector(
+                                      onTap: () => _openEditFormPage(form),
+                                      child: const Icon(
+                                        Icons.edit_rounded,
+                                        color: Color(0xFFE5B94C),
+                                        size: 20,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    GestureDetector(
+                                      onTap: () => _confirmDeleteForm(form.id),
+                                      child: const Icon(
+                                        Icons.delete_forever_rounded,
+                                        color: Color(0xFFD9614C),
+                                        size: 20,
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ],
                             ),
@@ -665,6 +678,14 @@ class _TeknisiChecklistScreenState extends State<TeknisiChecklistScreen> {
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (context) => EvaluateChecklistScreen(result: result),
+      ),
+    );
+  }
+
+  void _openEditFormPage(FormChecklistModel form) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => EditChecklistFormScreen(form: form),
       ),
     );
   }
@@ -1387,6 +1408,358 @@ class _EvaluateChecklistScreenState extends State<EvaluateChecklistScreen> {
             backgroundColor: const Color(0xFFD9614C),
             content: Text(
               provider.errorMessage ?? 'Gagal mengirim rekomendasi.',
+              style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800, color: Colors.white),
+            ),
+          ),
+        );
+      }
+    }
+  }
+}
+
+class EditChecklistFormScreen extends StatefulWidget {
+  final FormChecklistModel form;
+
+  const EditChecklistFormScreen({super.key, required this.form});
+
+  @override
+  State<EditChecklistFormScreen> createState() => _EditChecklistFormScreenState();
+}
+
+class _EditChecklistFormScreenState extends State<EditChecklistFormScreen> {
+  final _formKey = GlobalKey<FormState>();
+  late final TextEditingController _judulController;
+  late final TextEditingController _deskripsiController;
+  late final List<TextEditingController> _itemControllers;
+
+  @override
+  void initState() {
+    super.initState();
+    _judulController = TextEditingController(text: widget.form.judul);
+    _deskripsiController = TextEditingController(text: widget.form.deskripsi ?? '');
+    _itemControllers = widget.form.items
+        .map((item) => TextEditingController(text: item.itemName))
+        .toList();
+    if (_itemControllers.isEmpty) {
+      _itemControllers.add(TextEditingController());
+    }
+  }
+
+  @override
+  void dispose() {
+    _judulController.dispose();
+    _deskripsiController.dispose();
+    for (var ctrl in _itemControllers) {
+      ctrl.dispose();
+    }
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFFF4EBD0),
+      body: Stack(
+        children: [
+          Positioned.fill(
+            child: Opacity(
+              opacity: 0.05,
+              child: Image.network(
+                'https://www.transparenttextures.com/patterns/carbon-fibre.png',
+                repeat: ImageRepeat.repeat,
+              ),
+            ),
+          ),
+          SafeArea(
+            child: Form(
+              key: _formKey,
+              child: Column(
+                children: [
+                  // App Bar Header
+                  Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Container(
+                      width: double.infinity,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF4A90D9),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: const Color(0xFF2C1810), width: 4),
+                        boxShadow: const [
+                          BoxShadow(
+                            color: Color(0xFF2C1810),
+                            offset: Offset(8, 8),
+                          ),
+                        ],
+                      ),
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      child: Row(
+                        children: [
+                          IconButton(
+                            icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
+                            onPressed: () => Navigator.of(context).pop(),
+                          ),
+                          Expanded(
+                            child: Text(
+                              'EDIT FORM CHECKLIST',
+                              textAlign: TextAlign.center,
+                              style: GoogleFonts.plusJakartaSans(
+                                fontWeight: FontWeight.w900,
+                                fontSize: 16,
+                                color: Colors.white,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 48),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                  Expanded(
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Judul
+                          Text(
+                            'JUDUL CHECKLIST',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontWeight: FontWeight.w900,
+                              fontSize: 11,
+                              color: const Color(0xFF2C1810),
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          TextFormField(
+                            controller: _judulController,
+                            validator: (val) => val == null || val.isEmpty ? 'Judul wajib diisi' : null,
+                            style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800, fontSize: 14),
+                            decoration: _inputDecoration('Contoh: Pengecekan Rutin Mingguan'),
+                          ),
+                          const SizedBox(height: 20),
+
+                          // Deskripsi
+                          Text(
+                            'DESKRIPSI / PETUNJUK PENGISIAN',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontWeight: FontWeight.w900,
+                              fontSize: 11,
+                              color: const Color(0xFF2C1810),
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          TextFormField(
+                            controller: _deskripsiController,
+                            maxLines: 2,
+                            style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800, fontSize: 14),
+                            decoration: _inputDecoration('Petunjuk pengisian untuk mahasiswi...'),
+                          ),
+                          const SizedBox(height: 24),
+
+                          // Parameters/Items
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                'PARAMETER PENGECEKAN',
+                                style: GoogleFonts.plusJakartaSans(
+                                  fontWeight: FontWeight.w900,
+                                  fontSize: 11,
+                                  color: const Color(0xFF2C1810),
+                                  letterSpacing: 0.5,
+                                ),
+                              ),
+                              TextButton.icon(
+                                onPressed: () {
+                                  setState(() {
+                                    _itemControllers.add(TextEditingController());
+                                  });
+                                },
+                                icon: const Icon(Icons.add_circle_outline_rounded, color: Color(0xFF4A90D9), size: 18),
+                                label: Text(
+                                  'TAMBAH',
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontWeight: FontWeight.w900,
+                                    color: const Color(0xFF4A90D9),
+                                    fontSize: 11,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+
+                          ListView.builder(
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            itemCount: _itemControllers.length,
+                            itemBuilder: (context, index) {
+                              return Padding(
+                                padding: const EdgeInsets.only(bottom: 12),
+                                child: Row(
+                                  children: [
+                                    Expanded(
+                                      child: TextFormField(
+                                        controller: _itemControllers[index],
+                                        validator: (val) => val == null || val.isEmpty ? 'Parameter wajib diisi' : null,
+                                        style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800, fontSize: 14),
+                                        decoration: _inputDecoration('Nama parameter, misal: Tekanan Ban'),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    GestureDetector(
+                                      onTap: () {
+                                        if (_itemControllers.length > 1) {
+                                          setState(() {
+                                            _itemControllers[index].dispose();
+                                            _itemControllers.removeAt(index);
+                                          });
+                                        }
+                                      },
+                                      child: Container(
+                                        padding: const EdgeInsets.all(12),
+                                        decoration: BoxDecoration(
+                                          color: _itemControllers.length > 1 ? const Color(0xFFD9614C) : const Color(0xFF2C1810).withValues(alpha: 0.3),
+                                          borderRadius: BorderRadius.circular(12),
+                                          border: Border.all(color: const Color(0xFF2C1810), width: 2.5),
+                                        ),
+                                        child: const Icon(Icons.delete_outline_rounded, color: Colors.white, size: 20),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                  // Submit button
+                  Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: InkWell(
+                      onTap: _submitEdit,
+                      child: Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFE5B94C),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: const Color(0xFF2C1810), width: 4),
+                          boxShadow: const [
+                            BoxShadow(
+                              color: Color(0xFF2C1810),
+                              offset: Offset(4, 4),
+                            ),
+                          ],
+                        ),
+                        child: Center(
+                          child: Text(
+                            'SIMPAN PERUBAHAN',
+                            style: GoogleFonts.plusJakartaSans(
+                              color: const Color(0xFF2C1810),
+                              fontWeight: FontWeight.w900,
+                              fontSize: 13,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  InputDecoration _inputDecoration(String hint) {
+    return InputDecoration(
+      hintText: hint,
+      hintStyle: GoogleFonts.plusJakartaSans(
+        fontWeight: FontWeight.w700,
+        fontSize: 12,
+        color: const Color(0xFF2C1810).withValues(alpha: 0.4),
+      ),
+      filled: true,
+      fillColor: Colors.white,
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: Color(0xFF2C1810), width: 2.5),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: Color(0xFF2C1810), width: 3),
+      ),
+    );
+  }
+
+  void _submitEdit() async {
+    if (_itemControllers.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          backgroundColor: const Color(0xFFD9614C),
+          content: Text(
+            'Form harus memiliki minimal 1 parameter pengecekan!',
+            style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800, color: Colors.white),
+          ),
+        ),
+      );
+      return;
+    }
+
+    if (!_formKey.currentState!.validate()) return;
+
+    final provider = context.read<ChecklistProvider>();
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(
+        child: CircularProgressIndicator(
+          color: Color(0xFF2C1810),
+          strokeWidth: 4,
+        ),
+      ),
+    );
+
+    final itemNames = _itemControllers.map((ctrl) => ctrl.text.trim()).where((t) => t.isNotEmpty).toList();
+
+    final success = await provider.updateForm(
+      formId: widget.form.id,
+      judul: _judulController.text.trim(),
+      deskripsi: _deskripsiController.text.trim(),
+      itemNames: itemNames,
+    );
+
+    if (mounted) {
+      Navigator.of(context).pop(); // pop progress
+      if (success) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            backgroundColor: const Color(0xFF5AB974),
+            content: Text(
+              'Form checklist berhasil diperbarui!',
+              style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800, color: Colors.white),
+            ),
+          ),
+        );
+        Navigator.of(context).pop();
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            backgroundColor: const Color(0xFFD9614C),
+            content: Text(
+              provider.errorMessage ?? 'Gagal memperbarui form.',
               style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800, color: Colors.white),
             ),
           ),

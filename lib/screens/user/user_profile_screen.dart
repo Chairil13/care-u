@@ -56,7 +56,7 @@ class UserProfileScreen extends StatelessWidget {
         padding: const EdgeInsets.fromLTRB(20, 24, 20, 100),
         child: Column(
           children: [
-            _buildIdentityHero(context, fullName, user?.avatarUrl),
+            _buildIdentityHero(context, fullName, user?.avatarUrl, user?.email),
             const SizedBox(height: 32),
 
             // Account Settings Bento
@@ -206,6 +206,7 @@ class UserProfileScreen extends StatelessWidget {
     BuildContext context,
     String fullName,
     String? avatarUrl,
+    String? email,
   ) {
     return Column(
       children: [
@@ -289,6 +290,19 @@ class UserProfileScreen extends StatelessWidget {
             letterSpacing: 1,
           ),
         ),
+        if (email != null && email.isNotEmpty) ...[
+          const SizedBox(height: 4),
+          Text(
+            email,
+            textAlign: TextAlign.center,
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+              color: const Color(0xFF2C1810).withValues(alpha: 0.6),
+            ),
+          ),
+        ],
+        const SizedBox(height: 12),
         Consumer<MotorcycleProvider>(
           builder: (context, provider, child) {
             final bike = provider.motorcycles.isNotEmpty
@@ -348,20 +362,22 @@ class UserProfileScreen extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 16),
-        _buildRetroMenuItem(
-          context,
-          'PROFILE INFO',
-          'MANAGE YOUR PERSONAL DETAILS',
-          Icons.person_rounded,
-          const Color(0xFFE5B94C),
-          () => Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const EditProfileScreen()),
-          ),
-        ),
-        const SizedBox(height: 16),
         Row(
           children: [
+            Expanded(
+              child: _buildRetroMenuItem(
+                context,
+                'PROFILE INFO',
+                'MANAGE YOUR PERSONAL DETAILS',
+                Icons.person_rounded,
+                const Color(0xFFE5B94C),
+                () => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const EditProfileScreen()),
+                ),
+              ),
+            ),
+            const SizedBox(width: 16),
             Expanded(
               child: _buildRetroMenuItem(
                 context,
@@ -373,17 +389,6 @@ class UserProfileScreen extends StatelessWidget {
                   context,
                   MaterialPageRoute(builder: (_) => const EditPasswordScreen()),
                 ),
-              ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: _buildRetroMenuItem(
-                context,
-                'ALERTS',
-                'NOTIFS',
-                Icons.notifications_active_rounded,
-                const Color(0xFF81C995),
-                () {},
               ),
             ),
           ],
@@ -575,13 +580,61 @@ class UserProfileScreen extends StatelessWidget {
   Widget _buildLogoutButton(BuildContext context) {
     return GestureDetector(
       onTap: () async {
-        final authProvider = context.read<AuthProvider>();
-        await authProvider.signOut();
-        if (context.mounted) {
-          Navigator.of(context).pushAndRemoveUntil(
-            MaterialPageRoute(builder: (_) => const LoginScreen()),
-            (route) => false,
-          );
+        final confirmed = await showDialog<bool>(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            backgroundColor: const Color(0xFFF4EBD0),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+              side: const BorderSide(color: Color(0xFF2C1810), width: 4),
+            ),
+            title: Text(
+              'LOGOUT?',
+              style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w900),
+            ),
+            content: Text(
+              'Apakah Anda yakin ingin keluar?',
+              style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, false),
+                child: Text(
+                  'BATAL',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontWeight: FontWeight.w800,
+                    color: const Color(0xFF2C1810),
+                  ),
+                ),
+              ),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFFF5A5F),
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    side: const BorderSide(color: Color(0xFF2C1810), width: 2),
+                  ),
+                ),
+                onPressed: () => Navigator.pop(ctx, true),
+                child: Text(
+                  'KELUAR',
+                  style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w900),
+                ),
+              ),
+            ],
+          ),
+        );
+
+        if (confirmed == true && context.mounted) {
+          final authProvider = context.read<AuthProvider>();
+          await authProvider.signOut();
+          if (context.mounted) {
+            Navigator.of(context).pushAndRemoveUntil(
+              MaterialPageRoute(builder: (_) => const LoginScreen()),
+              (route) => false,
+            );
+          }
         }
       },
       child: Container(

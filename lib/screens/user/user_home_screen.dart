@@ -3,6 +3,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/motorcycle_provider.dart';
+import '../../providers/story_provider.dart';
+import '../../widgets/stories_bar.dart';
 
 class UserHomeScreen extends StatefulWidget {
   final void Function(int)? onTabChange;
@@ -41,10 +43,20 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
             ),
           ),
           SafeArea(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(20, 0, 20, 100),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+            child: RefreshIndicator(
+              color: const Color(0xFF2C1810),
+              backgroundColor: const Color(0xFFF4EBD0),
+              onRefresh: () async {
+                await Future.wait([
+                  context.read<StoryProvider>().fetchStories(),
+                  context.read<MotorcycleProvider>().fetchMotorcycles(),
+                ]);
+              },
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.fromLTRB(20, 0, 20, 100),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // Custom Retro AppBar
                   Padding(
@@ -135,6 +147,8 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
                     ),
                   ),
 
+                  const SizedBox(height: 24),
+                  const StoriesBar(),
                   const SizedBox(height: 32),
 
                   // Motorcycle Summary Card
@@ -184,6 +198,7 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
               ),
             ),
           ),
+        ),
         ],
       ),
     );
