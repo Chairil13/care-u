@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/motorcycle_model.dart';
@@ -41,26 +42,59 @@ class MotorcycleProvider extends ChangeNotifier {
     }
   }
 
+  /// Upload motorcycle image helper
+  Future<String?> uploadMotorcycleImage(File file) async {
+    final user = _supabase.auth.currentUser;
+    if (user == null) return null;
+
+    try {
+      final fileName = 'bike_${DateTime.now().millisecondsSinceEpoch}.jpg';
+      final path = '${user.id}/motorcycles/$fileName';
+      
+      await _supabase.storage.from('avatars').upload(
+        path,
+        file,
+        fileOptions: const FileOptions(
+          upsert: true,
+        ),
+      );
+
+      return _supabase.storage.from('avatars').getPublicUrl(path);
+    } catch (e) {
+      _errorMessage = 'Failed to upload image: $e';
+      debugPrint(_errorMessage);
+      return null;
+    }
+  }
+
   /// Add a new motorcycle
   Future<bool> addMotorcycle({
     required String brand,
     required String model,
     required String plateNumber,
     int? year,
+    File? imageFile,
   }) async {
     final user = _supabase.auth.currentUser;
     if (user == null) return false;
 
     _isLoading = true;
+    _errorMessage = null;
     notifyListeners();
 
     try {
+      String? imageUrl;
+      if (imageFile != null) {
+        imageUrl = await uploadMotorcycleImage(imageFile);
+      }
+
       await _supabase.from('motorcycles').insert({
         'user_id': user.id,
         'brand': brand,
         'model': model,
         'plate_number': plateNumber,
         'year': year,
+        'image_url': imageUrl,
       });
       
       await fetchMotorcycles();
@@ -75,15 +109,24 @@ class MotorcycleProvider extends ChangeNotifier {
   }
 
   /// Update an existing motorcycle
-  Future<bool> updateMotorcycle(MotorcycleModel motorcycle) async {
+  Future<bool> updateMotorcycle(MotorcycleModel motorcycle, {File? imageFile}) async {
     _isLoading = true;
+    _errorMessage = null;
     notifyListeners();
 
     try {
+      MotorcycleModel updatedMotorcycle = motorcycle;
+      if (imageFile != null) {
+        final imageUrl = await uploadMotorcycleImage(imageFile);
+        if (imageUrl != null) {
+          updatedMotorcycle = motorcycle.copyWith(imageUrl: imageUrl);
+        }
+      }
+
       await _supabase
           .from('motorcycles')
-          .update(motorcycle.toJson())
-          .eq('id', motorcycle.id);
+          .update(updatedMotorcycle.toJson())
+          .eq('id', updatedMotorcycle.id);
       
       await fetchMotorcycles();
       return true;
@@ -99,6 +142,7 @@ class MotorcycleProvider extends ChangeNotifier {
   /// Delete a motorcycle
   Future<bool> deleteMotorcycle(String id) async {
     _isLoading = true;
+    _errorMessage = null;
     notifyListeners();
 
     try {

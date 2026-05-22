@@ -11,11 +11,13 @@ class AuthProvider extends ChangeNotifier {
   UserModel? _currentUser;
   bool _isLoading = false;
   bool _isUploadingAvatar = false;
+  bool _isInitializing = true;
   String? _errorMessage;
 
   UserModel? get currentUser => _currentUser;
   bool get isLoading => _isLoading;
   bool get isUploadingAvatar => _isUploadingAvatar;
+  bool get isInitializing => _isInitializing;
   String? get errorMessage => _errorMessage;
   bool get isAuthenticated => _currentUser != null;
 
@@ -81,16 +83,20 @@ class AuthProvider extends ChangeNotifier {
 
   /// Cek apakah user sudah login sebelumnya (persistent session)
   Future<void> checkCurrentSession() async {
-    final session = _supabase.auth.currentSession;
-    if (session != null) {
-      try {
-        await _fetchUserProfile(session.user.id);
-      } catch (e) {
-        debugPrint('checkCurrentSession: error fetching profile: $e');
-        // Session ada tapi profil tidak bisa diambil, abaikan
-        _currentUser = null;
-        notifyListeners();
+    try {
+      final session = _supabase.auth.currentSession;
+      if (session != null) {
+        try {
+          await _fetchUserProfile(session.user.id);
+        } catch (e) {
+          debugPrint('checkCurrentSession: error fetching profile: $e');
+          // Session ada tapi profil tidak bisa diambil, abaikan
+          _currentUser = null;
+        }
       }
+    } finally {
+      _isInitializing = false;
+      notifyListeners();
     }
   }
 
@@ -234,15 +240,21 @@ class AuthProvider extends ChangeNotifier {
   }
 
   String _parseAuthError(String message) {
-    if (message.contains('Invalid login credentials')) {
+    final lowerMessage = message.toLowerCase();
+    if (lowerMessage.contains('invalid login credentials') ||
+        lowerMessage.contains('invalid credentials') ||
+        lowerMessage.contains('invalid_credentials') ||
+        lowerMessage.contains('invalid email or password') ||
+        lowerMessage.contains('user not found') ||
+        lowerMessage.contains('not found')) {
       return 'Email atau password salah.';
-    } else if (message.contains('Email not confirmed')) {
+    } else if (lowerMessage.contains('email not confirmed')) {
       return 'Email belum dikonfirmasi. Cek inbox email Anda.';
-    } else if (message.contains('User already registered')) {
+    } else if (lowerMessage.contains('user already registered')) {
       return 'Email sudah terdaftar. Silakan login.';
-    } else if (message.contains('Password should be at least')) {
+    } else if (lowerMessage.contains('password should be at least')) {
       return 'Password minimal 6 karakter.';
-    } else if (message.contains('Unable to validate email address')) {
+    } else if (lowerMessage.contains('unable to validate email address')) {
       return 'Format email tidak valid.';
     }
     return message;

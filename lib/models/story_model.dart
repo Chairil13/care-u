@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 class StoryModel {
   final String id;
   final String userId;
@@ -8,6 +10,21 @@ class StoryModel {
   // Joined user details
   final String? userName;
   final String? userAvatarUrl;
+  final String? userRole;
+
+  // Check if this story is actually a post (mediaUrl is stored as a JSON array starting with '[')
+  bool get isPost => mediaUrl.startsWith('[');
+
+  // Get parsed list of image URLs from the JSON array, or fallback to single URL list
+  List<String> get postImages {
+    if (!isPost) return [mediaUrl];
+    try {
+      final List<dynamic> decoded = json.decode(mediaUrl);
+      return decoded.map((e) => e.toString()).toList();
+    } catch (e) {
+      return [mediaUrl];
+    }
+  }
 
   StoryModel({
     required this.id,
@@ -17,14 +34,17 @@ class StoryModel {
     required this.createdAt,
     this.userName,
     this.userAvatarUrl,
+    this.userRole,
   });
 
   factory StoryModel.fromJson(Map<String, dynamic> json) {
     String? name;
     String? avatarUrl;
+    String? role;
     if (json['users'] != null && json['users'] is Map) {
       name = json['users']['name'] as String?;
       avatarUrl = json['users']['avatar_url'] as String?;
+      role = json['users']['role'] as String?;
     }
 
     return StoryModel(
@@ -37,6 +57,7 @@ class StoryModel {
           : DateTime.now(),
       userName: name,
       userAvatarUrl: avatarUrl,
+      userRole: role,
     );
   }
 

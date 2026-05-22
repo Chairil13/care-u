@@ -17,6 +17,10 @@ class StoriesBar extends StatelessWidget {
     final storyProvider = context.watch<StoryProvider>();
     final stories = storyProvider.stories;
 
+    if (currentUser == null) {
+      return const SizedBox.shrink();
+    }
+
     // Group stories by userId
     final Map<String, List<StoryModel>> groupedStories = {};
     final List<String> userIdsOrder = [];
@@ -29,15 +33,28 @@ class StoriesBar extends StatelessWidget {
       groupedStories[story.userId]!.add(story);
     }
 
-    final isTeknisi = currentUser?.isTeknisi ?? false;
-    final myUserId = currentUser?.id;
-    final myStories = myUserId != null ? (groupedStories[myUserId] ?? []) : <StoryModel>[];
+    final isTeknisi = currentUser.isTeknisi;
+    final myUserId = currentUser.id;
+    final myStories = groupedStories[myUserId] ?? <StoryModel>[];
     
-    // Filter out current user's stories from the list of other users
-    final otherUserIds = userIdsOrder.where((id) => id != myUserId).toList();
-
-    if (stories.isEmpty && !isTeknisi) {
-      return const SizedBox.shrink();
+    // Filter other users' stories based on role:
+    // - Regular user sees technicians' stories.
+    // - Technician sees users' stories.
+    final List<String> otherUserIds = [];
+    for (final id in userIdsOrder) {
+      if (id == myUserId) continue;
+      final userStories = groupedStories[id];
+      if (userStories == null || userStories.isEmpty) continue;
+      final firstStory = userStories.first;
+      if (isTeknisi) {
+        if (firstStory.userRole == 'user') {
+          otherUserIds.add(id);
+        }
+      } else {
+        if (firstStory.userRole == 'teknisi') {
+          otherUserIds.add(id);
+        }
+      }
     }
 
     return Column(
@@ -60,12 +77,12 @@ class StoriesBar extends StatelessWidget {
           height: 100,
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
-            itemCount: otherUserIds.length + (isTeknisi ? 1 : 0),
+            itemCount: otherUserIds.length + 1, // Always include "Story Anda"
             itemBuilder: (context, index) {
-              if (isTeknisi && index == 0) {
-                // Technician's "Story Anda" bubble
-                final avatarUrl = currentUser?.avatarUrl;
-                final fullName = currentUser?.name ?? 'Teknisi';
+              if (index == 0) {
+                // "Story Anda" bubble
+                final avatarUrl = currentUser.avatarUrl;
+                final fullName = currentUser.name;
                 return Padding(
                   padding: const EdgeInsets.only(right: 16.0),
                   child: Column(
@@ -73,12 +90,17 @@ class StoriesBar extends StatelessWidget {
                       GestureDetector(
                         onTap: () {
                           if (myStories.isNotEmpty) {
+                            final orderedStories = myStories.reversed.toList();
+                            final initialIndex = orderedStories.indexWhere(
+                              (story) => !storyProvider.viewedStoryIds.contains(story.id),
+                            );
+                            final startIdx = initialIndex != -1 ? initialIndex : 0;
                             Navigator.push(
                               context,
                               MaterialPageRoute(
                                 builder: (_) => StoryViewScreen(
-                                  stories: myStories.reversed.toList(),
-                                  initialIndex: 0,
+                                  stories: orderedStories,
+                                  initialIndex: startIdx,
                                 ),
                               ),
                             ).then((_) {
@@ -135,7 +157,7 @@ class StoriesBar extends StatelessWidget {
                                               ? Image.network(avatarUrl, fit: BoxFit.cover)
                                               : Center(
                                                   child: Text(
-                                                    fullName.isNotEmpty ? fullName[0].toUpperCase() : 'T',
+                                                    fullName.isNotEmpty ? fullName[0].toUpperCase() : 'U',
                                                     style: GoogleFonts.plusJakartaSans(
                                                       fontSize: 20,
                                                       fontWeight: FontWeight.w900,
@@ -151,7 +173,7 @@ class StoriesBar extends StatelessWidget {
                                             ? Image.network(avatarUrl, fit: BoxFit.cover)
                                             : Center(
                                                 child: Text(
-                                                  fullName.isNotEmpty ? fullName[0].toUpperCase() : 'T',
+                                                  fullName.isNotEmpty ? fullName[0].toUpperCase() : 'U',
                                                   style: GoogleFonts.plusJakartaSans(
                                                     fontSize: 24,
                                                     fontWeight: FontWeight.w900,
@@ -205,11 +227,10 @@ class StoriesBar extends StatelessWidget {
               }
 
               // Normal story bubble
-              final storyListIndex = isTeknisi ? index - 1 : index;
-              final targetUserId = otherUserIds[storyListIndex];
+              final targetUserId = otherUserIds[index - 1];
               final userStoriesList = groupedStories[targetUserId]!;
               final latestStory = userStoriesList.first;
-              final userName = latestStory.userName?.split(' ').first ?? 'Teknisi';
+              final userName = latestStory.userName?.split(' ').first ?? (isTeknisi ? 'User' : 'Teknisi');
 
               return Padding(
                 padding: const EdgeInsets.only(right: 16.0),
@@ -217,12 +238,17 @@ class StoriesBar extends StatelessWidget {
                   children: [
                     GestureDetector(
                       onTap: () {
+                        final orderedStories = userStoriesList.reversed.toList();
+                        final initialIndex = orderedStories.indexWhere(
+                          (story) => !storyProvider.viewedStoryIds.contains(story.id),
+                        );
+                        final startIdx = initialIndex != -1 ? initialIndex : 0;
                         Navigator.push(
                           context,
                           MaterialPageRoute(
                             builder: (_) => StoryViewScreen(
-                              stories: userStoriesList.reversed.toList(),
-                              initialIndex: 0,
+                              stories: orderedStories,
+                              initialIndex: startIdx,
                             ),
                           ),
                         ).then((_) {
@@ -233,51 +259,51 @@ class StoriesBar extends StatelessWidget {
                       },
                       child: (() {
                         final allStoriesViewed = userStoriesList.every((story) => storyProvider.viewedStoryIds.contains(story.id));
-                      return Container(
-                        width: 64,
-                        height: 64,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: Colors.white,
-                          border: Border.all(
-                            color: allStoriesViewed ? Colors.grey : const Color(0xFFE5B94C), // Gold border indicating unseen story, grey for seen
-                            width: 3.5,
-                          ),
-                          boxShadow: const [
-                            BoxShadow(
-                              color: Color(0xFF2C1810),
-                              offset: Offset(2, 2),
-                            ),
-                          ],
-                        ),
-                        padding: const EdgeInsets.all(2.5),
-                        child: Container(
+                        return Container(
+                          width: 64,
+                          height: 64,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            border: Border.all(color: const Color(0xFF2C1810), width: 2),
+                            color: Colors.white,
+                            border: Border.all(
+                              color: allStoriesViewed ? Colors.grey : const Color(0xFFE5B94C), // Gold border indicating unseen story, grey for seen
+                              width: 3.5,
+                            ),
+                            boxShadow: const [
+                              BoxShadow(
+                                color: Color(0xFF2C1810),
+                                offset: Offset(2, 2),
+                              ),
+                            ],
                           ),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(32),
-                            child: latestStory.userAvatarUrl != null
-                                ? Image.network(latestStory.userAvatarUrl!, fit: BoxFit.cover)
-                                : Container(
-                                    color: const Color(0xFF4A90D9),
-                                    child: Center(
-                                      child: Text(
-                                        userName.isNotEmpty ? userName[0].toUpperCase() : 'T',
-                                        style: GoogleFonts.plusJakartaSans(
-                                          fontSize: 20,
-                                          fontWeight: FontWeight.w900,
-                                          color: Colors.white,
+                          padding: const EdgeInsets.all(2.5),
+                          child: Container(
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              border: Border.all(color: const Color(0xFF2C1810), width: 2),
+                            ),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(32),
+                              child: latestStory.userAvatarUrl != null
+                                  ? Image.network(latestStory.userAvatarUrl!, fit: BoxFit.cover)
+                                  : Container(
+                                      color: const Color(0xFF4A90D9),
+                                      child: Center(
+                                        child: Text(
+                                          userName.isNotEmpty ? userName[0].toUpperCase() : '?',
+                                          style: GoogleFonts.plusJakartaSans(
+                                            fontSize: 20,
+                                            fontWeight: FontWeight.w900,
+                                            color: Colors.white,
+                                          ),
                                         ),
                                       ),
                                     ),
-                                  ),
+                            ),
                           ),
-                        ),
-                      );
-                    })(),
-                  ),
+                        );
+                      })(),
+                    ),
                     const SizedBox(height: 6),
                     Text(
                       userName,

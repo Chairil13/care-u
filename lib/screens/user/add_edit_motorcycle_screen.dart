@@ -1,5 +1,7 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import '../../models/motorcycle_model.dart';
 import '../../providers/motorcycle_provider.dart';
@@ -19,6 +21,10 @@ class _AddEditMotorcycleScreenState extends State<AddEditMotorcycleScreen> {
   late TextEditingController _modelController;
   late TextEditingController _plateController;
   late TextEditingController _yearController;
+  
+  File? _imageFile;
+  String? _currentImageUrl;
+  final ImagePicker _picker = ImagePicker();
 
   @override
   void initState() {
@@ -27,6 +33,7 @@ class _AddEditMotorcycleScreenState extends State<AddEditMotorcycleScreen> {
     _modelController = TextEditingController(text: widget.motorcycle?.model ?? '');
     _plateController = TextEditingController(text: widget.motorcycle?.plateNumber ?? '');
     _yearController = TextEditingController(text: widget.motorcycle?.year?.toString() ?? '');
+    _currentImageUrl = widget.motorcycle?.imageUrl;
   }
 
   @override
@@ -36,6 +43,44 @@ class _AddEditMotorcycleScreenState extends State<AddEditMotorcycleScreen> {
     _plateController.dispose();
     _yearController.dispose();
     super.dispose();
+  }
+
+  Future<void> _pickImage() async {
+    final source = await showModalBottomSheet<ImageSource>(
+      context: context,
+      backgroundColor: const Color(0xFFF4EBD0),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        side: BorderSide(color: Color(0xFF2C1810), width: 4),
+      ),
+      builder: (context) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.photo_library_rounded, color: Color(0xFFD9614C)),
+              title: Text('GALERI', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w900)),
+              onTap: () => Navigator.pop(context, ImageSource.gallery),
+            ),
+            const Divider(color: Color(0xFF2C1810), height: 1),
+            ListTile(
+              leading: const Icon(Icons.camera_alt_rounded, color: Color(0xFFD9614C)),
+              title: Text('KAMERA', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w900)),
+              onTap: () => Navigator.pop(context, ImageSource.camera),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    if (source != null) {
+      final pickedFile = await _picker.pickImage(source: source, imageQuality: 80);
+      if (pickedFile != null) {
+        setState(() {
+          _imageFile = File(pickedFile.path);
+        });
+      }
+    }
   }
 
   Future<void> _save() async {
@@ -50,6 +95,7 @@ class _AddEditMotorcycleScreenState extends State<AddEditMotorcycleScreen> {
         model: _modelController.text.trim(),
         plateNumber: _plateController.text.trim().toUpperCase(),
         year: int.tryParse(_yearController.text),
+        imageFile: _imageFile,
       );
     } else {
       final updated = MotorcycleModel(
@@ -59,8 +105,9 @@ class _AddEditMotorcycleScreenState extends State<AddEditMotorcycleScreen> {
         model: _modelController.text.trim(),
         plateNumber: _plateController.text.trim().toUpperCase(),
         year: int.tryParse(_yearController.text),
+        imageUrl: _currentImageUrl,
       );
-      success = await provider.updateMotorcycle(updated);
+      success = await provider.updateMotorcycle(updated, imageFile: _imageFile);
     }
 
     if (!mounted) return;
@@ -68,7 +115,10 @@ class _AddEditMotorcycleScreenState extends State<AddEditMotorcycleScreen> {
       Navigator.pop(context);
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(provider.errorMessage ?? 'Operation failed')),
+        SnackBar(
+          content: Text(provider.errorMessage ?? 'Operation failed'),
+          backgroundColor: const Color(0xFFD9614C),
+        ),
       );
     }
   }
@@ -144,6 +194,104 @@ class _AddEditMotorcycleScreenState extends State<AddEditMotorcycleScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
+                          // Image Selector Widget
+                          Text(
+                            'MOTORCYCLE PHOTO',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w800,
+                              color: const Color(0xFF2C1810),
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          GestureDetector(
+                            onTap: _pickImage,
+                            child: Container(
+                              height: 180,
+                              width: double.infinity,
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(color: const Color(0xFF2C1810), width: 4),
+                                boxShadow: const [
+                                  BoxShadow(
+                                    color: Color(0xFF2C1810),
+                                    offset: Offset(4, 4),
+                                  ),
+                                ],
+                              ),
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(12),
+                                child: Stack(
+                                  children: [
+                                    if (_imageFile != null)
+                                      Positioned.fill(
+                                        child: Image.file(
+                                          _imageFile!,
+                                          fit: BoxFit.cover,
+                                        ),
+                                      )
+                                    else if (_currentImageUrl != null)
+                                      Positioned.fill(
+                                        child: Image.network(
+                                          _currentImageUrl!,
+                                          fit: BoxFit.cover,
+                                        ),
+                                      )
+                                    else
+                                      Center(
+                                        child: Column(
+                                          mainAxisAlignment: MainAxisAlignment.center,
+                                          children: [
+                                            const Icon(
+                                              Icons.add_photo_alternate_rounded,
+                                              size: 40,
+                                              color: Color(0xFF2C1810),
+                                            ),
+                                            const SizedBox(height: 8),
+                                            Text(
+                                              'TAP TO UPLOAD PHOTO',
+                                              style: GoogleFonts.plusJakartaSans(
+                                                fontWeight: FontWeight.w800,
+                                                fontSize: 12,
+                                                color: const Color(0xFF2C1810),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    if (_imageFile != null || _currentImageUrl != null)
+                                      Positioned(
+                                        top: 8,
+                                        right: 8,
+                                        child: GestureDetector(
+                                          onTap: () {
+                                            setState(() {
+                                              _imageFile = null;
+                                              _currentImageUrl = null;
+                                            });
+                                          },
+                                          child: Container(
+                                            padding: const EdgeInsets.all(4),
+                                            decoration: const BoxDecoration(
+                                              color: Color(0xFFD9614C),
+                                              shape: BoxShape.circle,
+                                            ),
+                                            child: const Icon(
+                                              Icons.close_rounded,
+                                              color: Colors.white,
+                                              size: 20,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 24),
                           _buildTextField(
                             controller: _brandController,
                             label: 'BRAND NAME',

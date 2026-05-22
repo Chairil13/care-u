@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
-import '../auth/login_screen.dart';
+import '../../providers/story_provider.dart';
 import '../user/edit_profile_screen.dart';
 import '../user/edit_password_screen.dart';
 import 'user_list_screen.dart';
@@ -68,16 +68,30 @@ class TeknisiProfileScreen extends StatelessWidget {
                                 border: Border.all(color: const Color(0xFF2C1810), width: 4),
                                 boxShadow: const [BoxShadow(color: Color(0xFF2C1810), offset: Offset(4, 4))],
                               ),
-                              child: CircleAvatar(
-                                radius: 48,
-                                backgroundColor: const Color(0xFF4A90D9),
-                                backgroundImage: user?.avatarUrl != null ? NetworkImage(user!.avatarUrl!) : null,
-                                child: user?.avatarUrl == null
-                                    ? Text(
-                                        user?.name.isNotEmpty == true ? user!.name[0].toUpperCase() : '?',
-                                        style: GoogleFonts.plusJakartaSans(fontSize: 36, fontWeight: FontWeight.w900, color: Colors.white),
-                                      )
-                                    : null,
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(48),
+                                child: Material(
+                                  color: Colors.transparent,
+                                  child: InkWell(
+                                    onTap: () {
+                                      final fullName = user?.name ?? 'Teknisi';
+                                      final url = user?.avatarUrl ??
+                                          'https://ui-avatars.com/api/?name=${fullName.replaceAll(' ', '+')}&background=4A90D9&color=fff&size=512';
+                                      _showFullScreenImage(context, url, fullName);
+                                    },
+                                    child: CircleAvatar(
+                                      radius: 48,
+                                      backgroundColor: const Color(0xFF4A90D9),
+                                      backgroundImage: user?.avatarUrl != null ? NetworkImage(user!.avatarUrl!) : null,
+                                      child: user?.avatarUrl == null
+                                          ? Text(
+                                              user?.name.isNotEmpty == true ? user!.name[0].toUpperCase() : '?',
+                                              style: GoogleFonts.plusJakartaSans(fontSize: 36, fontWeight: FontWeight.w900, color: Colors.white),
+                                            )
+                                          : null,
+                                    ),
+                                  ),
+                                ),
                               ),
                             ),
                             Consumer<AuthProvider>(
@@ -185,6 +199,65 @@ class TeknisiProfileScreen extends StatelessWidget {
     );
   }
 
+  void _showFullScreenImage(
+    BuildContext context,
+    String imageUrl,
+    String fullName,
+  ) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => Scaffold(
+          backgroundColor: Colors.black,
+          appBar: AppBar(
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            leading: IconButton(
+              icon: const Icon(
+                Icons.close_rounded,
+                color: Colors.white,
+                size: 28,
+              ),
+              onPressed: () => Navigator.pop(context),
+            ),
+            title: Text(
+              fullName,
+              style: GoogleFonts.plusJakartaSans(
+                color: Colors.white,
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          body: Center(
+            child: InteractiveViewer(
+              minScale: 0.5,
+              maxScale: 4.0,
+              child: Image.network(
+                imageUrl,
+                fit: BoxFit.contain,
+                width: double.infinity,
+                height: double.infinity,
+                loadingBuilder: (context, child, loadingProgress) {
+                  if (loadingProgress == null) return child;
+                  return const Center(
+                    child: CircularProgressIndicator(color: Colors.white),
+                  );
+                },
+                errorBuilder: (context, error, stackTrace) => const Center(
+                  child: Icon(
+                    Icons.error_outline_rounded,
+                    color: Colors.white,
+                    size: 48,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   Future<void> _handleLogout(BuildContext context) async {
     final confirmed = await showDialog<bool>(
       context: context,
@@ -204,9 +277,28 @@ class TeknisiProfileScreen extends StatelessWidget {
       ),
     );
     if (confirmed == true && context.mounted) {
-      await context.read<AuthProvider>().signOut();
+      final navigator = Navigator.of(context);
+      // Show loading dialog
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (_) => const PopScope(
+          canPop: false,
+          child: Center(
+            child: CircularProgressIndicator(color: Color(0xFF2C1810)),
+          ),
+        ),
+      );
+
       if (context.mounted) {
-        Navigator.of(context).pushAndRemoveUntil(MaterialPageRoute(builder: (_) => const LoginScreen()), (route) => false);
+        context.read<StoryProvider>().clearData();
+      }
+      await context.read<AuthProvider>().signOut();
+      
+      try {
+        navigator.pop(); // Dismiss loading dialog
+      } catch (e) {
+        debugPrint('Error popping loading dialog: $e');
       }
     }
   }

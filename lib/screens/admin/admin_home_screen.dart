@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/admin_provider.dart';
+import '../../providers/story_provider.dart';
 import '../auth/login_screen.dart';
 import '../user/edit_profile_screen.dart'; // Reuse edit profile if applicable or create admin version
 import 'manage_users_screen.dart';
@@ -385,6 +386,9 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
     );
 
     if (confirmed == true) {
+      if (context.mounted) {
+        context.read<StoryProvider>().clearData();
+      }
       await context.read<AuthProvider>().signOut();
       if (context.mounted) {
         Navigator.of(context).pushAndRemoveUntil(

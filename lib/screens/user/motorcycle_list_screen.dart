@@ -188,13 +188,28 @@ class _MotorcycleListScreenState extends State<MotorcycleListScreen> {
             child: Row(
               children: [
                 Container(
-                  padding: const EdgeInsets.all(12),
+                  width: 58,
+                  height: 58,
                   decoration: BoxDecoration(
                     color: const Color(0xFFF4EBD0),
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(color: const Color(0xFF2C1810), width: 2),
                   ),
-                  child: const Icon(Icons.two_wheeler_rounded, color: Color(0xFF2C1810), size: 30),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(10),
+                    child: bike.imageUrl != null
+                        ? Image.network(
+                            bike.imageUrl!,
+                            fit: BoxFit.cover,
+                          )
+                        : const Center(
+                            child: Icon(
+                              Icons.two_wheeler_rounded,
+                              color: Color(0xFF2C1810),
+                              size: 30,
+                            ),
+                          ),
+                  ),
                 ),
                 const SizedBox(width: 16),
                 Expanded(

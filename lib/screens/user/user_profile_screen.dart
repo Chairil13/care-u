@@ -5,11 +5,11 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 
 import '../../providers/auth_provider.dart';
-import '../auth/login_screen.dart';
 import 'edit_profile_screen.dart';
 import 'edit_password_screen.dart';
 import 'motorcycle_list_screen.dart';
 import '../../providers/motorcycle_provider.dart';
+import '../../providers/story_provider.dart';
 
 class UserProfileScreen extends StatelessWidget {
   const UserProfileScreen({super.key});
@@ -362,36 +362,39 @@ class UserProfileScreen extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 16),
-        Row(
-          children: [
-            Expanded(
-              child: _buildRetroMenuItem(
-                context,
-                'PROFILE INFO',
-                'MANAGE YOUR PERSONAL DETAILS',
-                Icons.person_rounded,
-                const Color(0xFFE5B94C),
-                () => Navigator.push(
+        IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Expanded(
+                child: _buildRetroMenuItem(
                   context,
-                  MaterialPageRoute(builder: (_) => const EditProfileScreen()),
+                  'PROFILE INFO',
+                  'MANAGE YOUR PERSONAL DETAILS',
+                  Icons.person_rounded,
+                  const Color(0xFFE5B94C),
+                  () => Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const EditProfileScreen()),
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: _buildRetroMenuItem(
-                context,
-                'SECURITY',
-                'PASSWORDS',
-                Icons.lock_rounded,
-                const Color(0xFFF28B82),
-                () => Navigator.push(
+              const SizedBox(width: 16),
+              Expanded(
+                child: _buildRetroMenuItem(
                   context,
-                  MaterialPageRoute(builder: (_) => const EditPasswordScreen()),
+                  'SECURITY',
+                  'PASSWORDS',
+                  Icons.lock_rounded,
+                  const Color(0xFFF28B82),
+                  () => Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const EditPasswordScreen()),
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ],
     );
@@ -513,6 +516,36 @@ class UserProfileScreen extends StatelessWidget {
                         : null;
                     return Row(
                       children: [
+                        if (bike != null) ...[
+                          Container(
+                            width: 60,
+                            height: 60,
+                            margin: const EdgeInsets.only(right: 16),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFE5B94C),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: const Color(0xFF2C1810),
+                                width: 2,
+                              ),
+                            ),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(10),
+                              child: bike.imageUrl != null
+                                  ? Image.network(
+                                      bike.imageUrl!,
+                                      fit: BoxFit.cover,
+                                    )
+                                  : const Center(
+                                      child: Icon(
+                                        Icons.motorcycle_rounded,
+                                        color: Color(0xFF2C1810),
+                                        size: 30,
+                                      ),
+                                    ),
+                            ),
+                          ),
+                        ],
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -627,13 +660,31 @@ class UserProfileScreen extends StatelessWidget {
         );
 
         if (confirmed == true && context.mounted) {
+          final navigator = Navigator.of(context);
+          // Show loading dialog
+          showDialog(
+            context: context,
+            barrierDismissible: false,
+            builder: (_) => const PopScope(
+              canPop: false,
+              child: Center(
+                child: CircularProgressIndicator(
+                  color: Color(0xFFE5B94C),
+                ),
+              ),
+            ),
+          );
+
           final authProvider = context.read<AuthProvider>();
-          await authProvider.signOut();
           if (context.mounted) {
-            Navigator.of(context).pushAndRemoveUntil(
-              MaterialPageRoute(builder: (_) => const LoginScreen()),
-              (route) => false,
-            );
+            context.read<StoryProvider>().clearData();
+          }
+          await authProvider.signOut();
+          
+          try {
+            navigator.pop(); // Dismiss loading dialog
+          } catch (e) {
+            debugPrint('Error popping loading dialog: $e');
           }
         }
       },

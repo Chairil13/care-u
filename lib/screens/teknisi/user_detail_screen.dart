@@ -105,10 +105,17 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
           width: double.infinity, padding: const EdgeInsets.all(20),
           decoration: const BoxDecoration(color: Color(0xFF2C1810), borderRadius: BorderRadius.only(topLeft: Radius.circular(17), topRight: Radius.circular(17))),
           child: Row(children: [
-            CircleAvatar(
-              radius: 28, backgroundColor: const Color(0xFFE5B94C),
-              backgroundImage: u.avatarUrl != null ? NetworkImage(u.avatarUrl!) : null,
-              child: u.avatarUrl == null ? Text(u.name.isNotEmpty ? u.name[0].toUpperCase() : '?', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w900, fontSize: 22, color: const Color(0xFF2C1810))) : null,
+            GestureDetector(
+              onTap: () {
+                final url = u.avatarUrl ??
+                    'https://ui-avatars.com/api/?name=${u.name.replaceAll(' ', '+')}&background=E5B94C&color=2C1810&size=512';
+                _showFullScreenImage(context, url, u.name);
+              },
+              child: CircleAvatar(
+                radius: 28, backgroundColor: const Color(0xFFE5B94C),
+                backgroundImage: u.avatarUrl != null ? NetworkImage(u.avatarUrl!) : null,
+                child: u.avatarUrl == null ? Text(u.name.isNotEmpty ? u.name[0].toUpperCase() : '?', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w900, fontSize: 22, color: const Color(0xFF2C1810))) : null,
+              ),
             ),
             const SizedBox(width: 16),
             Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -157,10 +164,28 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), border: Border.all(color: const Color(0xFF2C1810), width: 3), boxShadow: const [BoxShadow(color: Color(0xFF2C1810), offset: Offset(3, 3))]),
           child: Row(children: [
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(color: const Color(0xFFE5B94C), borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFF2C1810), width: 2)),
-              child: const Icon(Icons.two_wheeler_rounded, color: Color(0xFF2C1810), size: 24),
+            GestureDetector(
+              onTap: m.imageUrl != null ? () => _showFullScreenImage(context, m.imageUrl!, '${m.brand} ${m.model}') : null,
+              child: Container(
+                width: 50,
+                height: 50,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFE5B94C),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: const Color(0xFF2C1810), width: 2),
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(10),
+                  child: m.imageUrl != null
+                      ? Image.network(
+                          m.imageUrl!,
+                          fit: BoxFit.cover,
+                        )
+                      : const Center(
+                          child: Icon(Icons.two_wheeler_rounded, color: Color(0xFF2C1810), size: 24),
+                        ),
+                ),
+              ),
             ),
             const SizedBox(width: 16),
             Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -445,6 +470,61 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  void _showFullScreenImage(BuildContext context, String imageUrl, String title) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => Scaffold(
+          backgroundColor: Colors.black,
+          appBar: AppBar(
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            leading: IconButton(
+              icon: const Icon(
+                Icons.close_rounded,
+                color: Colors.white,
+                size: 28,
+              ),
+              onPressed: () => Navigator.pop(context),
+            ),
+            title: Text(
+              title,
+              style: GoogleFonts.plusJakartaSans(
+                color: Colors.white,
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          body: Center(
+            child: InteractiveViewer(
+              minScale: 0.5,
+              maxScale: 4.0,
+              child: Image.network(
+                imageUrl,
+                fit: BoxFit.contain,
+                width: double.infinity,
+                height: double.infinity,
+                loadingBuilder: (context, child, loadingProgress) {
+                  if (loadingProgress == null) return child;
+                  return const Center(
+                    child: CircularProgressIndicator(color: Colors.white),
+                  );
+                },
+                errorBuilder: (context, error, stackTrace) => const Center(
+                  child: Icon(
+                    Icons.error_outline_rounded,
+                    color: Colors.white,
+                    size: 48,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }

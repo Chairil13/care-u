@@ -25,19 +25,136 @@ Deno.serve(async (req) => {
       });
     }
 
-    const { sender_id, receiver_id, message, image_url } = record;
-
-    if (!receiver_id || !sender_id) {
-      return new Response(JSON.stringify({ error: 'Missing sender_id or receiver_id' }), {
-        status: 400,
-        headers: { 'Content-Type': 'application/json' }
-      });
-    }
+    const table = payload.table;
 
     // Initialize Supabase Client using service_role key to bypass RLS policies
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+    let sender_id = '';
+    let receiver_id = '';
+    let title = '';
+    let body = '';
+
+    if (table === 'messages') {
+      sender_id = record.sender_id;
+      receiver_id = record.receiver_id;
+      if (!receiver_id || !sender_id) {
+        return new Response(JSON.stringify({ error: 'Missing sender_id or receiver_id' }), {
+          status: 400,
+          headers: { 'Content-Type': 'application/json' }
+        });
+      }
+
+      const { data: senderData } = await supabase
+        .from('users')
+        .select('name')
+        .eq('id', sender_id)
+        .single();
+      const senderName = senderData?.name || 'Seseorang';
+
+      title = senderName;
+      body = record.image_url ? '📷 Mengirim gambar' : record.message;
+
+    } else if (table === 'post_likes') {
+      sender_id = record.user_id;
+      const storyId = record.story_id;
+
+      // Fetch story owner
+      const { data: storyData, error: storyError } = await supabase
+        .from('stories')
+        .select('user_id')
+        .eq('id', storyId)
+        .single();
+
+      if (storyError || !storyData) {
+        console.log(`Error fetching story for like notification: ${storyError?.message}`);
+        return new Response(JSON.stringify({ message: 'Story not found. Notification skipped.' }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' }
+        });
+      }
+
+      receiver_id = storyData.user_id;
+
+      if (sender_id === receiver_id) {
+        return new Response(JSON.stringify({ message: 'Liking own post. Notification skipped.' }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' }
+        });
+      }
+
+      const { data: senderData } = await supabase
+        .from('users')
+        .select('name')
+        .eq('id', sender_id)
+        .single();
+      const senderName = senderData?.name || 'Seseorang';
+
+      title = 'Suka Baru';
+      body = `${senderName} menyukai postingan Anda.`;
+
+    } else if (table === 'post_comments') {
+      sender_id = record.user_id;
+      const storyId = record.story_id;
+      const content = record.content;
+
+      // Fetch story owner
+      const { data: storyData, error: storyError } = await supabase
+        .from('stories')
+        .select('user_id')
+        .eq('id', storyId)
+        .single();
+
+      if (storyError || !storyData) {
+        console.log(`Error fetching story for comment notification: ${storyError?.message}`);
+        return new Response(JSON.stringify({ message: 'Story not found. Notification skipped.' }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' }
+        });
+      }
+
+      receiver_id = storyData.user_id;
+
+      if (sender_id === receiver_id) {
+        return new Response(JSON.stringify({ message: 'Commenting on own post. Notification skipped.' }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' }
+        });
+      }
+
+      const { data: senderData } = await supabase
+        .from('users')
+        .select('name')
+        .eq('id', sender_id)
+        .single();
+      const senderName = senderData?.name || 'Seseorang';
+
+      title = 'Komentar Baru';
+      body = `${senderName}: "${content}"`;
+
+    } else {
+      // Fallback
+      sender_id = record.sender_id || record.user_id;
+      receiver_id = record.receiver_id;
+      if (!receiver_id || !sender_id) {
+        return new Response(JSON.stringify({ error: 'Missing receiver_id or sender_id' }), {
+          status: 400,
+          headers: { 'Content-Type': 'application/json' }
+        });
+      }
+
+      const { data: senderData } = await supabase
+        .from('users')
+        .select('name')
+        .eq('id', sender_id)
+        .single();
+      const senderName = senderData?.name || 'Seseorang';
+
+      title = senderName;
+      body = record.image_url ? '📷 Mengirim gambar' : record.message || '';
+    }
 
     // Fetch receiver's fcm_token
     const { data: receiverData, error: receiverError } = await supabase
@@ -55,15 +172,6 @@ Deno.serve(async (req) => {
     }
 
     const receiverFcmToken = receiverData.fcm_token;
-
-    // Fetch sender's name
-    const { data: senderData, error: senderError } = await supabase
-      .from('users')
-      .select('name')
-      .eq('id', sender_id)
-      .single();
-
-    const senderName = senderData?.name || 'Seseorang';
 
     // Parse service account credentials from env
     const firebaseCredentialsJson = Deno.env.get('FIREBASE_SERVICE_ACCOUNT');
@@ -92,8 +200,8 @@ Deno.serve(async (req) => {
       message: {
         token: receiverFcmToken,
         notification: {
-          title: senderName,
-          body: image_url ? '📷 Mengirim gambar' : message,
+          title: title,
+          body: body,
         },
         data: {
           sender_id: sender_id,

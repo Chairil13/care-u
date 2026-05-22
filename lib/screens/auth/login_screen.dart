@@ -18,6 +18,7 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
+  String? _loginError;
 
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
@@ -58,16 +59,17 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
   }
 
   Future<void> _handleLogin() async {
+    setState(() => _loginError = null);
     if (!_formKey.currentState!.validate()) return;
-
+ 
     final authProvider = context.read<AuthProvider>();
     final success = await authProvider.signIn(
       email: _emailController.text.trim(),
       password: _passwordController.text,
     );
-
+ 
     if (!mounted) return;
-
+ 
     if (success) {
       final user = authProvider.currentUser;
       final destination = user?.role == 'teknisi' 
@@ -76,7 +78,15 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
       
       Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (_) => destination));
     } else {
-      _showSnackbar(authProvider.errorMessage ?? 'Login gagal', isError: true);
+      setState(() {
+        final rawError = authProvider.errorMessage ?? '';
+        if (rawError.toLowerCase().contains('confirm') || rawError.toLowerCase().contains('konfirmasi')) {
+          _loginError = rawError;
+        } else {
+          _loginError = 'Email atau password salah.';
+        }
+      });
+      _showSnackbar(_loginError!, isError: true);
     }
   }
 
@@ -177,11 +187,62 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
           children: [
             _buildLabel('Email'),
             const SizedBox(height: 8),
-            _buildTextField(controller: _emailController, hint: 'Email Anda', icon: Icons.email_outlined),
+            _buildTextField(
+              controller: _emailController,
+              hint: 'Email Anda',
+              icon: Icons.email_outlined,
+              validator: (value) {
+                if (value == null || value.trim().isEmpty) {
+                  return 'Email wajib diisi';
+                }
+                return null;
+              },
+            ),
             const SizedBox(height: 20),
             _buildLabel('Password'),
             const SizedBox(height: 8),
-            _buildTextField(controller: _passwordController, hint: 'Password', icon: Icons.lock_outline, isPassword: true, obscureText: _obscurePassword, toggleObscure: () => setState(() => _obscurePassword = !_obscurePassword)),
+            _buildTextField(
+              controller: _passwordController,
+              hint: 'Password',
+              icon: Icons.lock_outline,
+              isPassword: true,
+              obscureText: _obscurePassword,
+              toggleObscure: () => setState(() => _obscurePassword = !_obscurePassword),
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return 'Password wajib diisi';
+                }
+                return null;
+              },
+            ),
+            if (_loginError != null) ...[
+              const SizedBox(height: 20),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFFEAEA),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: const Color(0xFFD9614C), width: 2),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.error_outline_rounded, color: Color(0xFFD9614C), size: 20),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        _loginError!,
+                        style: GoogleFonts.plusJakartaSans(
+                          fontWeight: FontWeight.w800,
+                          fontSize: 12,
+                          color: const Color(0xFFD9614C),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
             const SizedBox(height: 32),
             Consumer<AuthProvider>(
               builder: (context, auth, _) {
@@ -219,10 +280,19 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
     return Text(text.toUpperCase(), style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.w900, color: const Color(0xFF2C1810), letterSpacing: 1));
   }
 
-  Widget _buildTextField({required TextEditingController controller, required String hint, required IconData icon, bool isPassword = false, bool obscureText = false, VoidCallback? toggleObscure}) {
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required String hint,
+    required IconData icon,
+    bool isPassword = false,
+    bool obscureText = false,
+    VoidCallback? toggleObscure,
+    String? Function(String?)? validator,
+  }) {
     return TextFormField(
       controller: controller,
       obscureText: obscureText,
+      validator: validator,
       style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700, color: const Color(0xFF2C1810)),
       decoration: InputDecoration(
         hintText: hint.toUpperCase(),
@@ -233,6 +303,7 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: Color(0xFF2C1810), width: 3)),
         enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: Color(0xFF2C1810), width: 3)),
         focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: Color(0xFFD9614C), width: 3)),
+        errorStyle: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700, color: const Color(0xFFD9614C)),
       ),
     );
   }

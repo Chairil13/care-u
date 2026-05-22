@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
@@ -21,64 +22,91 @@ class StoryViewScreen extends StatefulWidget {
   State<StoryViewScreen> createState() => _StoryViewScreenState();
 }
 
-class _StoryViewScreenState extends State<StoryViewScreen> with SingleTickerProviderStateMixin {
+class _StoryViewScreenState extends State<StoryViewScreen> {
   late PageController _pageController;
-  late AnimationController _animController;
+  Timer? _timer;
+  final Stopwatch _stopwatch = Stopwatch();
+  double _progress = 0.0;
   int _currentIndex = 0;
   final TextEditingController _replyController = TextEditingController();
   final FocusNode _replyFocusNode = FocusNode();
   DateTime? _pressStartTime;
+  bool _isCurrentImageLoaded = false;
 
   @override
   void initState() {
     super.initState();
     _currentIndex = widget.initialIndex;
     _pageController = PageController(initialPage: widget.initialIndex);
-    _animController = AnimationController(vsync: this);
 
     _showStory();
 
-    _animController.addStatusListener((status) {
-      if (status == AnimationStatus.completed) {
-        _animController.stop();
-        _animController.reset();
-        if (_currentIndex + 1 < widget.stories.length) {
-          setState(() {
-            _currentIndex++;
-            _pageController.animateToPage(
-              _currentIndex,
-              duration: const Duration(milliseconds: 300),
-              curve: Curves.easeInOut,
-            );
-          });
-          _showStory();
-        } else {
-          // Last story completed, exit screen
-          Navigator.pop(context);
-        }
-      }
-    });
-
     _replyFocusNode.addListener(() {
       if (_replyFocusNode.hasFocus) {
-        _animController.stop();
+        _pauseStory();
       } else {
-        if (mounted && !_animController.isAnimating) {
-          _animController.forward();
+        if (mounted && _isCurrentImageLoaded) {
+          _startTimer();
         }
       }
     });
   }
 
   void _showStory() {
-    _animController.duration = const Duration(seconds: 5);
-    _animController.forward();
+    _isCurrentImageLoaded = true;
+    _progress = 0.0;
+    _stopwatch.reset();
+    _timer?.cancel();
+    _startTimer();
 
     // Register view for all stories viewed (including our own, so the border turns grey)
     final currentStory = widget.stories[_currentIndex];
     final currentUserId = Supabase.instance.client.auth.currentUser?.id;
     if (currentUserId != null) {
       context.read<StoryProvider>().markStoryAsViewed(currentStory.id);
+    }
+  }
+
+  void _startTimer() {
+    _timer?.cancel();
+    _stopwatch.start();
+    _timer = Timer.periodic(const Duration(milliseconds: 30), (timer) {
+      if (mounted) {
+        setState(() {
+          _progress = _stopwatch.elapsedMilliseconds / 5000.0;
+          if (_progress >= 1.0) {
+            _progress = 1.0;
+            _timer?.cancel();
+            _stopwatch.stop();
+            _stopwatch.reset();
+            _nextStory();
+          }
+        });
+      } else {
+        _timer?.cancel();
+      }
+    });
+  }
+
+  void _pauseStory() {
+    _stopwatch.stop();
+    _timer?.cancel();
+  }
+
+  void _nextStory() {
+    if (_currentIndex + 1 < widget.stories.length) {
+      setState(() {
+        _currentIndex++;
+        _pageController.animateToPage(
+          _currentIndex,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeInOut,
+        );
+      });
+      _showStory();
+    } else {
+      // Last story completed, exit screen
+      Navigator.pop(context);
     }
   }
 
@@ -127,7 +155,7 @@ class _StoryViewScreenState extends State<StoryViewScreen> with SingleTickerProv
   }
 
   void _showStoryOptions(BuildContext context, StoryModel story) {
-    _animController.stop();
+    _pauseStory();
 
     showModalBottomSheet(
       context: context,
@@ -169,8 +197,8 @@ class _StoryViewScreenState extends State<StoryViewScreen> with SingleTickerProv
         ),
       ),
     ).then((_) {
-      if (mounted && !_replyFocusNode.hasFocus) {
-        _animController.forward();
+      if (mounted && _isCurrentImageLoaded && !_replyFocusNode.hasFocus) {
+        _startTimer();
       }
     });
   }
@@ -235,8 +263,8 @@ class _StoryViewScreenState extends State<StoryViewScreen> with SingleTickerProv
           );
         }
       } else {
-        if (mounted) {
-          _animController.forward();
+        if (mounted && _isCurrentImageLoaded) {
+          _startTimer();
         }
       }
     });
@@ -280,7 +308,7 @@ class _StoryViewScreenState extends State<StoryViewScreen> with SingleTickerProv
   }
 
   void _showViewerListBottomSheet(StoryModel story) {
-    _animController.stop();
+    _pauseStory();
 
     showModalBottomSheet(
       context: context,
@@ -416,8 +444,8 @@ class _StoryViewScreenState extends State<StoryViewScreen> with SingleTickerProv
         );
       },
     ).then((_) {
-      if (mounted) {
-        _animController.forward();
+      if (mounted && _isCurrentImageLoaded) {
+        _startTimer();
       }
     });
   }
@@ -425,7 +453,7 @@ class _StoryViewScreenState extends State<StoryViewScreen> with SingleTickerProv
   @override
   void dispose() {
     _pageController.dispose();
-    _animController.dispose();
+    _timer?.cancel();
     _replyController.dispose();
     _replyFocusNode.dispose();
     super.dispose();
@@ -455,8 +483,7 @@ class _StoryViewScreenState extends State<StoryViewScreen> with SingleTickerProv
       if (dx < screenWidth / 3) {
         // Tap left: Go to previous
         if (_currentIndex > 0) {
-          _animController.stop();
-          _animController.reset();
+          _pauseStory();
           setState(() {
             _currentIndex--;
             _pageController.animateToPage(
@@ -472,8 +499,7 @@ class _StoryViewScreenState extends State<StoryViewScreen> with SingleTickerProv
         }
       } else {
         // Tap right: Go to next
-        _animController.stop();
-        _animController.reset();
+        _pauseStory();
         if (_currentIndex + 1 < widget.stories.length) {
           setState(() {
             _currentIndex++;
@@ -491,17 +517,71 @@ class _StoryViewScreenState extends State<StoryViewScreen> with SingleTickerProv
       }
     } else {
       // Long press release -> resume
-      if (mounted && !_replyFocusNode.hasFocus) {
-        _animController.forward();
+      if (mounted && _isCurrentImageLoaded && !_replyFocusNode.hasFocus) {
+        _startTimer();
       }
     }
   }
 
   void _onTapCancel() {
     _pressStartTime = null;
-    if (mounted && !_replyFocusNode.hasFocus) {
-      _animController.forward();
+    if (mounted && _isCurrentImageLoaded && !_replyFocusNode.hasFocus) {
+      _startTimer();
     }
+  }
+
+  Widget _buildStoryLikeButton(StoryModel story) {
+    final storyProvider = context.watch<StoryProvider>();
+    final isLiked = storyProvider.isStoryLiked(story.id);
+
+    return GestureDetector(
+      onTap: () async {
+        _pauseStory();
+        storyProvider.toggleStoryLike(story.id);
+        
+        // If liked, send chat notification message
+        if (storyProvider.isStoryLiked(story.id)) {
+          try {
+            final chatProvider = context.read<ChatProvider>();
+            // Send image/chat notification message
+            await chatProvider.sendImageMessage(
+              story.userId,
+              story.mediaUrl,
+              'Menyukai story Anda ❤️',
+            );
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Menyukai story! Chat terkirim.'),
+                  backgroundColor: Color(0xFF4A90D9),
+                  duration: Duration(seconds: 1),
+                ),
+              );
+            }
+          } catch (e) {
+            debugPrint('Error sending story like chat: $e');
+          }
+        }
+        
+        // Resume story timer if keyboard is not active
+        if (mounted && _isCurrentImageLoaded && !_replyFocusNode.hasFocus) {
+          _startTimer();
+        }
+      },
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Colors.black.withValues(alpha: 0.6),
+          shape: BoxShape.circle,
+          border: Border.all(color: Colors.white30, width: 1.5),
+        ),
+        child: Icon(
+          isLiked ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+          color: isLiked ? Colors.red : Colors.white,
+          size: 20,
+        ),
+      ),
+    );
   }
 
   @override
@@ -516,7 +596,7 @@ class _StoryViewScreenState extends State<StoryViewScreen> with SingleTickerProv
       body: GestureDetector(
         onTapDown: (details) {
           _pressStartTime = DateTime.now();
-          _animController.stop();
+          _pauseStory();
         },
         onTapUp: (details) => _onTapUp(details, story),
         onTapCancel: _onTapCancel,
@@ -545,13 +625,15 @@ class _StoryViewScreenState extends State<StoryViewScreen> with SingleTickerProv
                               child: CircularProgressIndicator(color: Colors.white),
                             );
                           },
-                          errorBuilder: (context, error, stackTrace) => const Center(
-                            child: Icon(
-                              Icons.error_outline_rounded,
-                              color: Colors.white,
-                              size: 48,
-                            ),
-                          ),
+                          errorBuilder: (context, error, stackTrace) {
+                            return const Center(
+                              child: Icon(
+                                Icons.error_outline_rounded,
+                                color: Colors.white,
+                                size: 48,
+                              ),
+                            );
+                          },
                         ),
                       ),
                     );
@@ -607,22 +689,13 @@ class _StoryViewScreenState extends State<StoryViewScreen> with SingleTickerProv
                           (idx) => Expanded(
                             child: Padding(
                               padding: const EdgeInsets.symmetric(horizontal: 2),
-                              child: AnimatedBuilder(
-                                animation: _animController,
-                                builder: (context, child) {
-                                  double val = 0.0;
-                                  if (idx < _currentIndex) {
-                                    val = 1.0;
-                                  } else if (idx == _currentIndex) {
-                                    val = _animController.value;
-                                  }
-                                  return LinearProgressIndicator(
-                                    value: val,
-                                    backgroundColor: Colors.white30,
-                                    valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
-                                    minHeight: 3,
-                                  );
-                                },
+                              child: LinearProgressIndicator(
+                                value: idx < _currentIndex
+                                    ? 1.0
+                                    : (idx == _currentIndex ? _progress : 0.0),
+                                backgroundColor: Colors.white30,
+                                valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
+                                minHeight: 3,
                               ),
                             ),
                           ),
@@ -697,23 +770,41 @@ class _StoryViewScreenState extends State<StoryViewScreen> with SingleTickerProv
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     if (story.caption != null && story.caption!.isNotEmpty) ...[
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                        decoration: BoxDecoration(
-                          color: Colors.black.withValues(alpha: 0.6),
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: Colors.white24, width: 1),
-                        ),
-                        child: Text(
-                          story.caption!,
-                          style: GoogleFonts.plusJakartaSans(
-                            color: Colors.white,
-                            fontSize: 14,
-                            fontWeight: FontWeight.w700,
-                            height: 1.4,
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                              decoration: BoxDecoration(
+                                color: Colors.black.withValues(alpha: 0.6),
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(color: Colors.white24, width: 1),
+                              ),
+                              child: Text(
+                                story.caption!,
+                                style: GoogleFonts.plusJakartaSans(
+                                  color: Colors.white,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w700,
+                                  height: 1.4,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
                           ),
-                          textAlign: TextAlign.center,
-                        ),
+                          if (showReplyInput) ...[
+                            const SizedBox(width: 12),
+                            _buildStoryLikeButton(story),
+                          ],
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                    ] else if (showReplyInput) ...[
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          _buildStoryLikeButton(story),
+                        ],
                       ),
                       const SizedBox(height: 12),
                     ],

@@ -5,6 +5,7 @@ class MotorcycleModel {
   final String model;
   final String plateNumber;
   final int? year;
+  final String? imageUrl;
   final DateTime? createdAt;
 
   MotorcycleModel({
@@ -14,6 +15,7 @@ class MotorcycleModel {
     required this.model,
     required this.plateNumber,
     this.year,
+    this.imageUrl,
     this.createdAt,
   });
 
@@ -25,6 +27,7 @@ class MotorcycleModel {
       model: json['model'] as String,
       plateNumber: json['plate_number'] as String,
       year: json['year'] as int?,
+      imageUrl: json['image_url'] as String?,
       createdAt: json['created_at'] != null
           ? DateTime.parse(json['created_at'] as String)
           : null,
@@ -39,6 +42,7 @@ class MotorcycleModel {
       'model': model,
       'plate_number': plateNumber,
       'year': year,
+      'image_url': imageUrl,
     };
   }
 
@@ -50,7 +54,30 @@ class MotorcycleModel {
       'model': model,
       'plate_number': plateNumber,
       'year': year,
+      'image_url': imageUrl,
     };
     return map;
+  }
+
+  MotorcycleModel copyWith({
+    String? id,
+    String? userId,
+    String? brand,
+    String? model,
+    String? plateNumber,
+    int? year,
+    String? imageUrl,
+    DateTime? createdAt,
+  }) {
+    return MotorcycleModel(
+      id: id ?? this.id,
+      userId: userId ?? this.userId,
+      brand: brand ?? this.brand,
+      model: model ?? this.model,
+      plateNumber: plateNumber ?? this.plateNumber,
+      year: year ?? this.year,
+      imageUrl: imageUrl ?? this.imageUrl,
+      createdAt: createdAt ?? this.createdAt,
+    );
   }
 }

@@ -98,7 +98,7 @@ class _SplashRouterState extends State<SplashRouter> {
     return Consumer<AuthProvider>(
       builder: (context, auth, _) {
         // Tampilkan splash saat loading awal (HANYA jika belum terautentikasi)
-        if (auth.isLoading && !auth.isAuthenticated) {
+        if (auth.isInitializing) {
           return const SplashScreen();
         }
 

@@ -5,6 +5,7 @@ import '../../providers/auth_provider.dart';
 import '../../providers/motorcycle_provider.dart';
 import '../../providers/story_provider.dart';
 import '../../widgets/stories_bar.dart';
+import '../../widgets/post_card.dart';
 
 class UserHomeScreen extends StatefulWidget {
   final void Function(int)? onTabChange;
@@ -18,9 +19,13 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
   @override
   void initState() {
     super.initState();
-    Future.microtask(
-      () => context.read<MotorcycleProvider>().fetchMotorcycles(),
-    );
+    Future.microtask(() {
+      if (mounted) {
+        context.read<MotorcycleProvider>().fetchMotorcycles();
+        context.read<StoryProvider>().fetchStories();
+        context.read<StoryProvider>().fetchPosts();
+      }
+    });
   }
 
   @override
@@ -49,6 +54,7 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
               onRefresh: () async {
                 await Future.wait([
                   context.read<StoryProvider>().fetchStories(),
+                  context.read<StoryProvider>().fetchPosts(),
                   context.read<MotorcycleProvider>().fetchMotorcycles(),
                 ]);
               },
@@ -57,449 +63,175 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
                 padding: const EdgeInsets.fromLTRB(20, 0, 20, 100),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Custom Retro AppBar
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 8,
-                          ),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFF4EBD0),
-                            border: Border.all(
-                              color: const Color(0xFF2C1810),
-                              width: 2,
+                  children: [
+                    // Custom Retro AppBar
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 6,
                             ),
-                            boxShadow: const [
-                              BoxShadow(
-                                color: Color(0xFF2C1810),
-                                offset: Offset(4, 4),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF4EBD0),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: const Color(0xFF2C1810),
+                                width: 2,
                               ),
-                            ],
-                          ),
-                          child: Text(
-                            'CARE U',
-                            style: GoogleFonts.plusJakartaSans(
-                              fontWeight: FontWeight.w900,
-                              fontSize: 18,
-                              color: const Color(0xFF2C1810),
-                              letterSpacing: 1,
+                              boxShadow: const [
+                                BoxShadow(
+                                  color: Color(0xFF2C1810),
+                                  offset: Offset(3, 3),
+                                ),
+                              ],
+                            ),
+                            child: Text(
+                              'CARE U',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontWeight: FontWeight.w900,
+                                fontSize: 14,
+                                color: const Color(0xFF2C1810),
+                                letterSpacing: 1,
+                              ),
                             ),
                           ),
-                        ),
-                        Container(
-                          padding: const EdgeInsets.all(2),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF2C1810),
-                            shape: BoxShape.circle,
-                            border: Border.all(
-                              color: const Color(0xFF2C1810),
-                              width: 2,
+                          GestureDetector(
+                            onTap: () => widget.onTabChange?.call(3),
+                            child: Container(
+                              padding: const EdgeInsets.all(2),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF2C1810),
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: const Color(0xFF2C1810),
+                                  width: 2,
+                                ),
+                              ),
+                              child: CircleAvatar(
+                                radius: 18,
+                                backgroundColor: const Color(0xFFF4EBD0),
+                                backgroundImage: user?.avatarUrl != null
+                                    ? NetworkImage(user!.avatarUrl!)
+                                    : NetworkImage(
+                                        'https://ui-avatars.com/api/?name=${user?.name.replaceAll(' ', '+') ?? 'User'}&background=D9614C&color=fff',
+                                      ),
+                              ),
                             ),
                           ),
-                          child: CircleAvatar(
-                            radius: 18,
-                            backgroundColor: const Color(0xFFF4EBD0),
-                            backgroundImage: user?.avatarUrl != null
-                                ? NetworkImage(user!.avatarUrl!)
-                                : NetworkImage(
-                                    'https://ui-avatars.com/api/?name=${user?.name.replaceAll(' ', '+') ?? 'User'}&background=D9614C&color=fff',
-                                  ),
-                          ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
 
-                  const SizedBox(height: 16),
+                    const SizedBox(height: 16),
 
-                  // Greeting Section
-                  Text(
-                    'HELLO, ${userName.toUpperCase()}!',
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 40,
-                      fontWeight: FontWeight.w900,
-                      height: 1,
-                      color: const Color(0xFF2C1810),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 4,
-                    ),
-                    decoration: const BoxDecoration(
-                      color: Color(0xFFE5B94C), // Mustard color
-                    ),
-                    child: Text(
-                      "LET'S KEEP YOUR RIDE IN TOP SHAPE.",
+                    // Greeting Section
+                    Text(
+                      'HELLO, ${userName.toUpperCase()}!',
                       style: GoogleFonts.plusJakartaSans(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w800,
+                        fontSize: 28,
+                        fontWeight: FontWeight.w900,
+                        height: 1.1,
                         color: const Color(0xFF2C1810),
                       ),
                     ),
-                  ),
-
-                  const SizedBox(height: 24),
-                  const StoriesBar(),
-                  const SizedBox(height: 32),
-
-                  // Motorcycle Summary Card
-                  _buildMotorcycleCard(),
-                  const SizedBox(height: 32),
-
-                  // Quick Actions Grid
-                  Text(
-                    'QUICK ACTIONS',
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w900,
-                      color: const Color(0xFF2C1810),
+                    const SizedBox(height: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 4,
+                      ),
+                      decoration: const BoxDecoration(
+                        color: Color(0xFFE5B94C), // Mustard color
+                      ),
+                      child: Text(
+                        "LET'S KEEP YOUR RIDE IN TOP SHAPE.",
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w800,
+                          color: const Color(0xFF2C1810),
+                        ),
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 16),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _buildActionCard(
-                          'CHECKLIST',
-                          'Inspection',
-                          Icons.fact_check_rounded,
-                          const Color(0xFFD9614C),
-                          onTap: () => widget.onTabChange?.call(1),
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: _buildActionCard(
-                          'CHAT TECH',
-                          'Expert Advice',
-                          Icons.chat_bubble_rounded,
-                          const Color(0xFFE5B94C),
-                          onTap: () => widget.onTabChange?.call(2),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  _buildFullWidthActionCard(),
-                  const SizedBox(height: 32),
 
-                  // Recent Status
-                  _buildNotificationCard(),
-                ],
+                    const SizedBox(height: 24),
+                    const StoriesBar(),
+                    const SizedBox(height: 24),
+                    _buildPostsSection(),
+                  ],
+                ),
               ),
             ),
           ),
-        ),
         ],
       ),
     );
   }
 
-  Widget _buildMotorcycleCard() {
-    return Consumer<MotorcycleProvider>(
-      builder: (context, provider, child) {
-        final bike = provider.motorcycles.isNotEmpty
-            ? provider.motorcycles.first
-            : null;
-        final displayName = bike != null
-            ? '${bike.brand} ${bike.model}'
-            : 'NO MOTORCYCLE';
+  Widget _buildPostsSection() {
+    final storyProvider = context.watch<StoryProvider>();
+    final posts = storyProvider.posts;
 
-        return Container(
-          width: double.infinity,
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: const Color(0xFF2C1810), width: 3),
-            boxShadow: const [
-              BoxShadow(color: Color(0xFF2C1810), offset: Offset(4, 4)),
-            ],
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(16),
-                decoration: const BoxDecoration(
-                  color: Color(0xFF2C1810),
-                  borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(17),
-                    topRight: Radius.circular(17),
-                  ),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'ACTIVE MACHINE',
-                      style: GoogleFonts.plusJakartaSans(
-                        color: const Color(0xFFF4EBD0),
-                        fontWeight: FontWeight.w900,
-                        fontSize: 12,
-                        letterSpacing: 1,
-                      ),
-                    ),
-                    const Icon(
-                      Icons.bolt_rounded,
-                      color: Color(0xFFE5B94C),
-                      size: 18,
-                    ),
-                  ],
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      displayName.toUpperCase(),
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 24,
-                        fontWeight: FontWeight.w900,
-                        color: const Color(0xFF2C1810),
-                        height: 1.1,
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _buildInfoItem(
-                            'MILEAGE',
-                            '4,520 KM',
-                            Icons.speed_rounded,
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: _buildInfoItem(
-                            'HEALTH',
-                            '92%',
-                            Icons.favorite_rounded,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildInfoItem(String label, String value, IconData icon) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF4EBD0),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFF2C1810), width: 2),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(icon, size: 14, color: const Color(0xFF2C1810)),
-              const SizedBox(width: 6),
-              Text(
-                label,
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w900,
-                  color: const Color(0xFF2C1810),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 4),
-          Text(
-            value,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 4.0),
+          child: Text(
+            'FEED POSTS',
             style: GoogleFonts.plusJakartaSans(
-              fontSize: 14,
+              fontSize: 12,
               fontWeight: FontWeight.w900,
               color: const Color(0xFF2C1810),
+              letterSpacing: 1,
             ),
           ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildActionCard(
-    String title,
-    String subtitle,
-    IconData icon,
-    Color primaryColor, {
-    VoidCallback? onTap,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: const Color(0xFF2C1810), width: 3),
-          boxShadow: const [
-            BoxShadow(color: Color(0xFF2C1810), offset: Offset(4, 4)),
-          ],
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: primaryColor,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: const Color(0xFF2C1810), width: 2),
-              ),
-              child: Icon(icon, color: const Color(0xFF2C1810), size: 20),
+        const SizedBox(height: 12),
+        if (posts.isEmpty)
+          Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: const Color(0xFF2C1810), width: 3),
+              boxShadow: const [
+                BoxShadow(color: Color(0xFF2C1810), offset: Offset(4, 4)),
+              ],
             ),
-            const SizedBox(height: 12),
-            Text(
-              title,
-              style: GoogleFonts.plusJakartaSans(
-                fontSize: 12,
-                fontWeight: FontWeight.w900,
-                color: const Color(0xFF2C1810),
-              ),
-            ),
-            const SizedBox(height: 2),
-            Text(
-              subtitle,
-              style: GoogleFonts.plusJakartaSans(
-                fontSize: 9,
-                fontWeight: FontWeight.w700,
-                color: const Color(0xFF2C1810).withValues(alpha: 0.6),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildFullWidthActionCard() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF4EBD0), // Vintage Paper
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: const Color(0xFF2C1810), width: 3),
-        boxShadow: const [
-          BoxShadow(color: Color(0xFF2C1810), offset: Offset(6, 6)),
-        ],
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 48,
-                height: 48,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFE5B94C),
-                  border: Border.all(color: const Color(0xFF2C1810), width: 2),
-                ),
-                child: const Icon(
-                  Icons.school_rounded,
-                  color: Color(0xFF2C1810),
-                ),
-              ),
-              const SizedBox(width: 16),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+            child: Center(
+              child: Column(
                 children: [
-                  Text(
-                    'VIEW EDUCATION',
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w900,
-                      color: const Color(0xFF2C1810),
-                    ),
+                  const Icon(
+                    Icons.grid_off_rounded,
+                    size: 48,
+                    color: Color(0xFF2C1810),
                   ),
+                  const SizedBox(height: 12),
                   Text(
-                    'LEARN DIY MAINTENANCE',
+                    'Belum ada postingan feed.',
                     style: GoogleFonts.plusJakartaSans(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w700,
-                      color: const Color(0xFF2C1810).withValues(alpha: 0.6),
+                      fontWeight: FontWeight.w800,
+                      color: const Color(0xFF2C1810),
                     ),
                   ),
                 ],
               ),
-            ],
-          ),
-          const Icon(Icons.arrow_forward_rounded, color: Color(0xFF2C1810)),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildNotificationCard() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: const Color(0xFFFFE0E0),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFF2C1810), width: 3),
-        boxShadow: const [
-          BoxShadow(color: Color(0xFFD9614C), offset: Offset(4, 4)),
-        ],
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Icon(
-            Icons.notification_important_rounded,
-            color: Color(0xFF2C1810),
-            size: 20,
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'SERVICE DUE SOON',
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w900,
-                    color: const Color(0xFF2C1810),
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  'YOUR SCHEDULED OIL CHANGE IS DUE IN 5 DAYS. TAP TO BOOK.',
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
-                    color: const Color(0xFF2C1810),
-                  ),
-                ),
-              ],
             ),
+          )
+        else
+          ListView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: posts.length,
+            itemBuilder: (context, index) {
+              return PostCard(post: posts[index]);
+            },
           ),
-        ],
-      ),
+      ],
     );
   }
 }

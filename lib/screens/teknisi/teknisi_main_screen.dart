@@ -5,6 +5,7 @@ import '../../providers/chat_provider.dart';
 import '../../providers/checklist_provider.dart';
 import '../../models/user_model.dart';
 import '../chat/chat_detail_screen.dart';
+import '../user/bookmarked_posts_screen.dart';
 
 import 'teknisi_home_screen.dart';
 import 'teknisi_profile_screen.dart';
@@ -20,12 +21,22 @@ class TeknisiMainScreen extends StatefulWidget {
 class _TeknisiMainScreenState extends State<TeknisiMainScreen> {
   int _selectedIndex = 0;
 
-  final List<Widget> _screens = [
-    const TeknisiHomeScreen(),
-    const TeknisiChecklistScreen(),
-    const _ChatPlaceholder(),
-    const TeknisiProfileScreen(),
-  ];
+  late final List<Widget> _screens;
+
+  @override
+  void initState() {
+    super.initState();
+    _screens = [
+      TeknisiHomeScreen(onTabChange: (index) {
+        setState(() {
+          _selectedIndex = index;
+        });
+      }),
+      const TeknisiChecklistScreen(),
+      const _ChatPlaceholder(),
+      const TeknisiProfileScreen(),
+    ];
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -202,16 +213,38 @@ class _ChatPlaceholderState extends State<_ChatPlaceholder> {
                     ),
                   ],
                 ),
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                child: Text(
-                  'CHAT DENGAN USER',
-                  textAlign: TextAlign.center,
-                  style: GoogleFonts.plusJakartaSans(
-                    fontWeight: FontWeight.w900,
-                    fontSize: 18,
-                    color: Colors.white,
-                    letterSpacing: 1,
-                  ),
+                padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    Text(
+                      'CHAT DENGAN USER',
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.plusJakartaSans(
+                        fontWeight: FontWeight.w900,
+                        fontSize: 18,
+                        color: Colors.white,
+                        letterSpacing: 1,
+                      ),
+                    ),
+                    Positioned(
+                      right: 0,
+                      child: GestureDetector(
+                        onTap: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (context) => const BookmarkedPostsScreen(),
+                            ),
+                          );
+                        },
+                        child: const Icon(
+                          Icons.bookmark_rounded,
+                          color: Colors.white,
+                          size: 24,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),

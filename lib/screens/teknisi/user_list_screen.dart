@@ -196,12 +196,22 @@ class _UserListScreenState extends State<UserListScreen> {
               child: Row(
                 children: [
                   Container(
-                    padding: const EdgeInsets.all(8),
+                    width: 40,
+                    height: 40,
                     decoration: BoxDecoration(
                       color: const Color(0xFF4A90D9).withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: const Color(0xFF2C1810), width: 1.5),
                     ),
-                    child: const Icon(Icons.two_wheeler_rounded, size: 20, color: Color(0xFF4A90D9)),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(8.5),
+                      child: (motors.isNotEmpty && motors.first.imageUrl != null)
+                          ? Image.network(
+                              motors.first.imageUrl!,
+                              fit: BoxFit.cover,
+                            )
+                          : const Icon(Icons.two_wheeler_rounded, size: 20, color: Color(0xFF4A90D9)),
+                    ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
