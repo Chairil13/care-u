@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io' show Platform;
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
@@ -17,6 +18,7 @@ import 'screens/auth/login_screen.dart';
 import 'screens/user/user_main_screen.dart';
 import 'screens/teknisi/teknisi_main_screen.dart';
 import 'screens/admin/admin_home_screen.dart';
+import 'screens/auth/reset_password_screen.dart';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
@@ -82,10 +84,30 @@ class SplashRouter extends StatefulWidget {
 }
 
 class _SplashRouterState extends State<SplashRouter> {
+  late final StreamSubscription<AuthState> _authSubscription;
+
   @override
   void initState() {
     super.initState();
     _checkSession();
+    _listenForPasswordRecovery();
+  }
+
+  @override
+  void dispose() {
+    _authSubscription.cancel();
+    super.dispose();
+  }
+
+  void _listenForPasswordRecovery() {
+    _authSubscription = Supabase.instance.client.auth.onAuthStateChange.listen((data) {
+      if (data.event == AuthChangeEvent.passwordRecovery) {
+        // User clicked the reset link → navigate to reset password screen
+        navigatorKey.currentState?.push(
+          MaterialPageRoute(builder: (_) => const ResetPasswordScreen()),
+        );
+      }
+    });
   }
 
   Future<void> _checkSession() async {
@@ -159,10 +181,12 @@ class SplashScreen extends StatelessWidget {
                       ),
                     ],
                   ),
-                  child: const Icon(
-                    Icons.motorcycle_rounded,
-                    color: Color(0xFFF4EBD0),
-                    size: 64,
+                  child: Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Image.asset(
+                      'assets/careu.png',
+                      fit: BoxFit.contain,
+                    ),
                   ),
                 ),
                 const SizedBox(height: 48),

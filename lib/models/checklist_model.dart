@@ -3,6 +3,7 @@ class FormChecklistModel {
   final String teknisiId;
   final String judul;
   final String? deskripsi;
+  final String kategori;
   final DateTime? createdAt;
   final List<ChecklistItemModel> items;
 
@@ -11,6 +12,7 @@ class FormChecklistModel {
     required this.teknisiId,
     required this.judul,
     this.deskripsi,
+    this.kategori = 'Harian',
     this.createdAt,
     this.items = const [],
   });
@@ -28,6 +30,7 @@ class FormChecklistModel {
       teknisiId: json['teknisi_id'] as String,
       judul: json['judul'] as String,
       deskripsi: json['deskripsi'] as String?,
+      kategori: json['kategori'] as String? ?? 'Harian',
       createdAt: json['created_at'] != null
           ? DateTime.parse(json['created_at'] as String)
           : null,
@@ -41,6 +44,7 @@ class FormChecklistModel {
       'teknisi_id': teknisiId,
       'judul': judul,
       'deskripsi': deskripsi,
+      'kategori': kategori,
       'created_at': createdAt?.toIso8601String(),
     };
   }
@@ -50,6 +54,7 @@ class FormChecklistModel {
       'teknisi_id': teknisiId,
       'judul': judul,
       'deskripsi': deskripsi,
+      'kategori': kategori,
     };
   }
 }
@@ -94,6 +99,7 @@ class ChecklistResultModel {
   final String? userName;
   final String? formJudul;
   final String? formDeskripsi;
+  final String? formKategori;
 
   ChecklistResultModel({
     required this.id,
@@ -105,6 +111,7 @@ class ChecklistResultModel {
     this.userName,
     this.formJudul,
     this.formDeskripsi,
+    this.formKategori,
   });
 
   factory ChecklistResultModel.fromJson(Map<String, dynamic> json) {
@@ -115,9 +122,11 @@ class ChecklistResultModel {
 
     String? formJudul;
     String? formDeskripsi;
+    String? formKategori;
     if (json['form_checklist'] != null && json['form_checklist'] is Map) {
       formJudul = json['form_checklist']['judul'] as String?;
       formDeskripsi = json['form_checklist']['deskripsi'] as String?;
+      formKategori = json['form_checklist']['kategori'] as String?;
     }
 
     return ChecklistResultModel(
@@ -132,6 +141,7 @@ class ChecklistResultModel {
       userName: userName,
       formJudul: formJudul,
       formDeskripsi: formDeskripsi,
+      formKategori: formKategori,
     );
   }
 

@@ -6,7 +6,9 @@ import '../../providers/story_provider.dart';
 import '../../models/user_model.dart';
 import '../story/create_story_screen.dart';
 import '../story/create_post_screen.dart';
+import '../story/create_reel_screen.dart';
 import '../../widgets/stories_bar.dart';
+import '../../widgets/reels_bar.dart';
 import '../../widgets/post_card.dart';
 
 class TeknisiHomeScreen extends StatefulWidget {
@@ -88,13 +90,14 @@ class _TeknisiHomeScreenState extends State<TeknisiHomeScreen> {
               leading: const Icon(Icons.video_library_rounded, color: Color(0xFF2C1810)),
               title: Text('UPLOAD REELS', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800, color: const Color(0xFF2C1810))),
               onTap: () {
+                final storyProvider = context.read<StoryProvider>();
                 Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Fitur Reels akan segera hadir!'),
-                    backgroundColor: Color(0xFFE5B94C),
-                  ),
-                );
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const CreateReelScreen()),
+                ).then((_) {
+                  storyProvider.fetchPosts();
+                });
               },
             ),
           ],
@@ -143,6 +146,7 @@ class _TeknisiHomeScreenState extends State<TeknisiHomeScreen> {
                     const SizedBox(height: 24),
                     const StoriesBar(),
                     const SizedBox(height: 24),
+                    const ReelsBar(),
                     _buildPostsSection(),
                   ],
                 ),

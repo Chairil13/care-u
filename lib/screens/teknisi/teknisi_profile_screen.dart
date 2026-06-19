@@ -7,7 +7,10 @@ import '../../providers/auth_provider.dart';
 import '../../providers/story_provider.dart';
 import '../user/edit_profile_screen.dart';
 import '../user/edit_password_screen.dart';
+import '../user/bookmarked_posts_screen.dart';
 import 'user_list_screen.dart';
+import '../auth/login_screen.dart';
+
 
 class TeknisiProfileScreen extends StatelessWidget {
   const TeknisiProfileScreen({super.key});
@@ -157,6 +160,10 @@ class TeknisiProfileScreen extends StatelessWidget {
                     Navigator.push(context, MaterialPageRoute(builder: (_) => const UserListScreen()));
                   }),
                   const SizedBox(height: 16),
+                  _buildMenuItem(context, 'POSTINGAN TERSIMPAN', 'Akses postingan & reels di-bookmark', Icons.bookmark_rounded, const Color(0xFF00685E), () {
+                    Navigator.push(context, MaterialPageRoute(builder: (_) => const BookmarkedPostsScreen()));
+                  }),
+                  const SizedBox(height: 16),
                   _buildMenuItem(context, 'SECURITY', 'Ubah password akun', Icons.lock_rounded, const Color(0xFFF28B82), () {
                     Navigator.push(context, MaterialPageRoute(builder: (_) => const EditPasswordScreen()));
                   }),
@@ -299,6 +306,13 @@ class TeknisiProfileScreen extends StatelessWidget {
         navigator.pop(); // Dismiss loading dialog
       } catch (e) {
         debugPrint('Error popping loading dialog: $e');
+      }
+
+      if (navigator.mounted) {
+        navigator.pushAndRemoveUntil(
+          MaterialPageRoute(builder: (_) => const LoginScreen()),
+          (route) => false,
+        );
       }
     }
   }

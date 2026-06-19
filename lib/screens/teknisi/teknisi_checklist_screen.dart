@@ -3,9 +3,23 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../../providers/checklist_provider.dart';
 import '../../models/checklist_model.dart';
+import 'checklist_dashboard.dart';
 
 String _formatDate(DateTime dt) {
-  final months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+  final months = [
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'Mei',
+    'Jun',
+    'Jul',
+    'Agu',
+    'Sep',
+    'Okt',
+    'Nov',
+    'Des',
+  ];
   final day = dt.day.toString().padLeft(2, '0');
   final month = months[dt.month - 1];
   final year = dt.year;
@@ -22,7 +36,8 @@ class TeknisiChecklistScreen extends StatefulWidget {
 }
 
 class _TeknisiChecklistScreenState extends State<TeknisiChecklistScreen> {
-  int _activeTab = 0; // 0 = Form Checklist, 1 = Hasil User
+  int _activeTab = 0; // 0 = Dashboard, 1 = Kelola Form, 2 = Hasil User
+  String _selectedResultsKategori = 'Semua';
 
   @override
   void initState() {
@@ -39,6 +54,28 @@ class _TeknisiChecklistScreenState extends State<TeknisiChecklistScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.transparent, // Texture in MainScreen
+      floatingActionButton: _activeTab == 1
+          ? GestureDetector(
+              onTap: _openCreateFormPage,
+              child: Container(
+                width: 56,
+                height: 56,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFE5B94C),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: const Color(0xFF2C1810), width: 3),
+                  boxShadow: const [
+                    BoxShadow(color: Color(0xFF2C1810), offset: Offset(4, 4)),
+                  ],
+                ),
+                child: const Icon(
+                  Icons.add_rounded,
+                  color: Color(0xFF2C1810),
+                  size: 32,
+                ),
+              ),
+            )
+          : null,
       body: SafeArea(
         child: Column(
           children: [
@@ -52,10 +89,7 @@ class _TeknisiChecklistScreenState extends State<TeknisiChecklistScreen> {
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(color: const Color(0xFF2C1810), width: 4),
                   boxShadow: const [
-                    BoxShadow(
-                      color: Color(0xFF2C1810),
-                      offset: Offset(8, 8),
-                    ),
+                    BoxShadow(color: Color(0xFF2C1810), offset: Offset(8, 8)),
                   ],
                 ),
                 padding: const EdgeInsets.symmetric(vertical: 16),
@@ -83,8 +117,13 @@ class _TeknisiChecklistScreenState extends State<TeknisiChecklistScreen> {
                       child: Container(
                         padding: const EdgeInsets.symmetric(vertical: 12),
                         decoration: BoxDecoration(
-                          color: _activeTab == 0 ? const Color(0xFF4A90D9) : Colors.white,
-                          border: Border.all(color: const Color(0xFF2C1810), width: 3),
+                          color: _activeTab == 0
+                              ? const Color(0xFF4A90D9)
+                              : Colors.white,
+                          border: Border.all(
+                            color: const Color(0xFF2C1810),
+                            width: 3,
+                          ),
                           borderRadius: const BorderRadius.only(
                             topLeft: Radius.circular(16),
                             bottomLeft: Radius.circular(16),
@@ -92,11 +131,13 @@ class _TeknisiChecklistScreenState extends State<TeknisiChecklistScreen> {
                         ),
                         alignment: Alignment.center,
                         child: Text(
-                          'KELOLA FORM',
+                          'DASHBOARD',
                           style: GoogleFonts.plusJakartaSans(
                             fontWeight: FontWeight.w900,
-                            fontSize: 12,
-                            color: _activeTab == 0 ? Colors.white : const Color(0xFF2C1810),
+                            fontSize: 10,
+                            color: _activeTab == 0
+                                ? Colors.white
+                                : const Color(0xFF2C1810),
                             letterSpacing: 0.5,
                           ),
                         ),
@@ -109,8 +150,42 @@ class _TeknisiChecklistScreenState extends State<TeknisiChecklistScreen> {
                       child: Container(
                         padding: const EdgeInsets.symmetric(vertical: 12),
                         decoration: BoxDecoration(
-                          color: _activeTab == 1 ? const Color(0xFF4A90D9) : Colors.white,
-                          border: Border.all(color: const Color(0xFF2C1810), width: 3),
+                          color: _activeTab == 1
+                              ? const Color(0xFF4A90D9)
+                              : Colors.white,
+                          border: Border.all(
+                            color: const Color(0xFF2C1810),
+                            width: 3,
+                          ),
+                        ),
+                        alignment: Alignment.center,
+                        child: Text(
+                          'KELOLA FORM',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontWeight: FontWeight.w900,
+                            fontSize: 10,
+                            color: _activeTab == 1
+                                ? Colors.white
+                                : const Color(0xFF2C1810),
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: () => setState(() => _activeTab = 2),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        decoration: BoxDecoration(
+                          color: _activeTab == 2
+                              ? const Color(0xFF4A90D9)
+                              : Colors.white,
+                          border: Border.all(
+                            color: const Color(0xFF2C1810),
+                            width: 3,
+                          ),
                           borderRadius: const BorderRadius.only(
                             topRight: Radius.circular(16),
                             bottomRight: Radius.circular(16),
@@ -121,8 +196,10 @@ class _TeknisiChecklistScreenState extends State<TeknisiChecklistScreen> {
                           'HASIL USER',
                           style: GoogleFonts.plusJakartaSans(
                             fontWeight: FontWeight.w900,
-                            fontSize: 12,
-                            color: _activeTab == 1 ? Colors.white : const Color(0xFF2C1810),
+                            fontSize: 10,
+                            color: _activeTab == 2
+                                ? Colors.white
+                                : const Color(0xFF2C1810),
                             letterSpacing: 0.5,
                           ),
                         ),
@@ -142,7 +219,9 @@ class _TeknisiChecklistScreenState extends State<TeknisiChecklistScreen> {
                 backgroundColor: const Color(0xFFF4EBD0),
                 onRefresh: () async {
                   await context.read<ChecklistProvider>().fetchForms();
-                  await context.read<ChecklistProvider>().fetchResults(isTeknisi: true);
+                  await context.read<ChecklistProvider>().fetchResults(
+                    isTeknisi: true,
+                  );
                 },
                 child: Consumer<ChecklistProvider>(
                   builder: (context, provider, child) {
@@ -156,9 +235,102 @@ class _TeknisiChecklistScreenState extends State<TeknisiChecklistScreen> {
                     }
 
                     if (_activeTab == 0) {
+                      return ChecklistDashboard(
+                        results: provider.results,
+                        forms: provider.forms,
+                        onEvaluate: _openEvaluateScreen,
+                      );
+                    } else if (_activeTab == 1) {
                       return _buildFormsSection(provider.forms);
                     } else {
-                      return _buildResultsSection(provider.results);
+                      final filteredResults =
+                          _selectedResultsKategori == 'Semua'
+                          ? provider.results
+                          : provider.results
+                                .where(
+                                  (r) =>
+                                      (r.formKategori ?? 'Harian') ==
+                                      _selectedResultsKategori,
+                                )
+                                .toList();
+                      return Column(
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 8,
+                            ),
+                            child: SingleChildScrollView(
+                              scrollDirection: Axis.horizontal,
+                              child: Row(
+                                children:
+                                    [
+                                      'Semua',
+                                      'Harian',
+                                      'Mingguan',
+                                      'Bulanan',
+                                    ].map((cat) {
+                                      final isSelected =
+                                          _selectedResultsKategori == cat;
+                                      return Padding(
+                                        padding: const EdgeInsets.only(
+                                          right: 8,
+                                        ),
+                                        child: InkWell(
+                                          onTap: () {
+                                            setState(() {
+                                              _selectedResultsKategori = cat;
+                                            });
+                                          },
+                                          child: Container(
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 16,
+                                              vertical: 8,
+                                            ),
+                                            decoration: BoxDecoration(
+                                              color: isSelected
+                                                  ? const Color(0xFFE5B94C)
+                                                  : Colors.white,
+                                              borderRadius:
+                                                  BorderRadius.circular(12),
+                                              border: Border.all(
+                                                color: const Color(0xFF2C1810),
+                                                width: 2,
+                                              ),
+                                              boxShadow: isSelected
+                                                  ? null
+                                                  : const [
+                                                      BoxShadow(
+                                                        color: Color(
+                                                          0xFF2C1810,
+                                                        ),
+                                                        offset: Offset(2, 2),
+                                                      ),
+                                                    ],
+                                            ),
+                                            child: Text(
+                                              cat.toUpperCase(),
+                                              style:
+                                                  GoogleFonts.plusJakartaSans(
+                                                    fontWeight: FontWeight.w900,
+                                                    fontSize: 10,
+                                                    color: const Color(
+                                                      0xFF2C1810,
+                                                    ),
+                                                  ),
+                                            ),
+                                          ),
+                                        ),
+                                      );
+                                    }).toList(),
+                              ),
+                            ),
+                          ),
+                          Expanded(
+                            child: _buildResultsSection(filteredResults),
+                          ),
+                        ],
+                      );
                     }
                   },
                 ),
@@ -173,47 +345,12 @@ class _TeknisiChecklistScreenState extends State<TeknisiChecklistScreen> {
   Widget _buildFormsSection(List<FormChecklistModel> forms) {
     return Column(
       children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          child: InkWell(
-            onTap: _openCreateFormPage,
-            child: Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(vertical: 14),
-              decoration: BoxDecoration(
-                color: const Color(0xFFE5B94C), // Retro Gold/Mustard
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: const Color(0xFF2C1810), width: 3),
-                boxShadow: const [
-                  BoxShadow(
-                    color: Color(0xFF2C1810),
-                    offset: Offset(4, 4),
-                  ),
-                ],
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Icons.add_box_rounded, color: Color(0xFF2C1810)),
-                  const SizedBox(width: 8),
-                  Text(
-                    'BUAT FORM CHECKLIST BARU',
-                    style: GoogleFonts.plusJakartaSans(
-                      color: const Color(0xFF2C1810),
-                      fontWeight: FontWeight.w900,
-                      fontSize: 12,
-                      letterSpacing: 0.5,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-        const SizedBox(height: 8),
         Expanded(
           child: forms.isEmpty
-              ? _buildEmptyState('BELUM ADA FORM', 'Ketuk tombol di atas untuk membuat checklist pengecekan mingguan pertama Anda.')
+              ? _buildEmptyState(
+                  'BELUM ADA FORM',
+                  'Ketuk tombol + di pojok kanan bawah untuk membuat checklist pengecekan pertama Anda.',
+                )
               : ListView.builder(
                   padding: const EdgeInsets.fromLTRB(16, 8, 16, 80),
                   itemCount: forms.length,
@@ -224,7 +361,10 @@ class _TeknisiChecklistScreenState extends State<TeknisiChecklistScreen> {
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: const Color(0xFF2C1810), width: 3),
+                        border: Border.all(
+                          color: const Color(0xFF2C1810),
+                          width: 3,
+                        ),
                         boxShadow: const [
                           BoxShadow(
                             color: Color(0xFF2C1810),
@@ -237,7 +377,10 @@ class _TeknisiChecklistScreenState extends State<TeknisiChecklistScreen> {
                         children: [
                           Container(
                             width: double.infinity,
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 12,
+                            ),
                             decoration: const BoxDecoration(
                               color: Color(0xFF2C1810),
                               borderRadius: BorderRadius.only(
@@ -249,7 +392,7 @@ class _TeknisiChecklistScreenState extends State<TeknisiChecklistScreen> {
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 Text(
-                                  'FORM MINGGUAN',
+                                  'FORM ${form.kategori.toUpperCase()}',
                                   style: GoogleFonts.plusJakartaSans(
                                     color: const Color(0xFFF4EBD0),
                                     fontSize: 10,
@@ -296,11 +439,14 @@ class _TeknisiChecklistScreenState extends State<TeknisiChecklistScreen> {
                                 ),
                                 const SizedBox(height: 8),
                                 Text(
-                                  form.deskripsi ?? 'Pengecekan rutin parameter motor.',
+                                  form.deskripsi ??
+                                      'Pengecekan rutin parameter motor.',
                                   style: GoogleFonts.plusJakartaSans(
                                     fontWeight: FontWeight.w700,
                                     fontSize: 12,
-                                    color: const Color(0xFF2C1810).withValues(alpha: 0.7),
+                                    color: const Color(
+                                      0xFF2C1810,
+                                    ).withValues(alpha: 0.7),
                                   ),
                                 ),
                                 const SizedBox(height: 12),
@@ -309,11 +455,17 @@ class _TeknisiChecklistScreenState extends State<TeknisiChecklistScreen> {
                                   runSpacing: 8,
                                   children: form.items.map((item) {
                                     return Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 10,
+                                        vertical: 4,
+                                      ),
                                       decoration: BoxDecoration(
                                         color: const Color(0xFFF4EBD0),
                                         borderRadius: BorderRadius.circular(8),
-                                        border: Border.all(color: const Color(0xFF2C1810), width: 1.5),
+                                        border: Border.all(
+                                          color: const Color(0xFF2C1810),
+                                          width: 1.5,
+                                        ),
                                       ),
                                       child: Text(
                                         item.itemName.toUpperCase(),
@@ -341,7 +493,10 @@ class _TeknisiChecklistScreenState extends State<TeknisiChecklistScreen> {
 
   Widget _buildResultsSection(List<ChecklistResultModel> results) {
     if (results.isEmpty) {
-      return _buildEmptyState('BELUM ADA TANGGAPAN', 'Belum ada user yang mengirimkan checklist mereka.');
+      return _buildEmptyState(
+        'BELUM ADA TANGGAPAN',
+        'Belum ada user yang mengirimkan checklist mereka.',
+      );
     }
 
     return ListView.builder(
@@ -353,7 +508,8 @@ class _TeknisiChecklistScreenState extends State<TeknisiChecklistScreen> {
             ? _formatDate(result.createdAt!.toLocal())
             : 'Hari ini';
 
-        final hasFeedback = result.feedback != null && result.feedback!.isNotEmpty;
+        final hasFeedback =
+            result.feedback != null && result.feedback!.isNotEmpty;
 
         return Container(
           margin: const EdgeInsets.only(bottom: 20),
@@ -362,10 +518,7 @@ class _TeknisiChecklistScreenState extends State<TeknisiChecklistScreen> {
             borderRadius: BorderRadius.circular(20),
             border: Border.all(color: const Color(0xFF2C1810), width: 3),
             boxShadow: const [
-              BoxShadow(
-                color: Color(0xFF2C1810),
-                offset: Offset(4, 4),
-              ),
+              BoxShadow(color: Color(0xFF2C1810), offset: Offset(4, 4)),
             ],
           ),
           child: Column(
@@ -375,7 +528,9 @@ class _TeknisiChecklistScreenState extends State<TeknisiChecklistScreen> {
                 width: double.infinity,
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: hasFeedback ? const Color(0xFF2C1810) : const Color(0xFF4A90D9),
+                  color: hasFeedback
+                      ? const Color(0xFF2C1810)
+                      : const Color(0xFF4A90D9),
                   borderRadius: const BorderRadius.only(
                     topLeft: Radius.circular(16),
                     topRight: Radius.circular(16),
@@ -385,7 +540,7 @@ class _TeknisiChecklistScreenState extends State<TeknisiChecklistScreen> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      hasFeedback ? 'SUDAH DIBERI SARAN' : 'PERLU EVALUASI',
+                      '${(result.formKategori ?? 'Harian').toUpperCase()} • ${hasFeedback ? 'SUDAH DIBERI SARAN' : 'PERLU EVALUASI'}',
                       style: GoogleFonts.plusJakartaSans(
                         color: Colors.white,
                         fontSize: 10,
@@ -413,7 +568,10 @@ class _TeknisiChecklistScreenState extends State<TeknisiChecklistScreen> {
                           decoration: BoxDecoration(
                             color: const Color(0xFF2C1810),
                             shape: BoxShape.circle,
-                            border: Border.all(color: const Color(0xFF2C1810), width: 1.5),
+                            border: Border.all(
+                              color: const Color(0xFF2C1810),
+                              width: 1.5,
+                            ),
                           ),
                           child: CircleAvatar(
                             radius: 18,
@@ -441,7 +599,9 @@ class _TeknisiChecklistScreenState extends State<TeknisiChecklistScreen> {
                                 style: GoogleFonts.plusJakartaSans(
                                   fontWeight: FontWeight.w700,
                                   fontSize: 10,
-                                  color: const Color(0xFF2C1810).withValues(alpha: 0.6),
+                                  color: const Color(
+                                    0xFF2C1810,
+                                  ).withValues(alpha: 0.6),
                                 ),
                               ),
                             ],
@@ -465,15 +625,22 @@ class _TeknisiChecklistScreenState extends State<TeknisiChecklistScreen> {
                       runSpacing: 8,
                       children: result.jawaban.entries.map((entry) {
                         final String item = entry.key;
-                        final Map<String, dynamic> detail = Map<String, dynamic>.from(entry.value as Map);
-                        final String status = detail['status'] as String? ?? 'Baik';
+                        final Map<String, dynamic> detail =
+                            Map<String, dynamic>.from(entry.value as Map);
+                        final String status =
+                            detail['status'] as String? ?? 'Baik';
 
                         Color statusColor = const Color(0xFF5AB974);
-                        if (status == 'Perlu Servis') statusColor = const Color(0xFFE5B94C);
-                        if (status == 'Kritis') statusColor = const Color(0xFFD9614C);
+                        if (status == 'Perlu Servis')
+                          statusColor = const Color(0xFFE5B94C);
+                        if (status == 'Kritis')
+                          statusColor = const Color(0xFFD9614C);
 
                         return Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 3,
+                          ),
                           decoration: BoxDecoration(
                             color: statusColor.withValues(alpha: 0.15),
                             borderRadius: BorderRadius.circular(6),
@@ -498,7 +665,10 @@ class _TeknisiChecklistScreenState extends State<TeknisiChecklistScreen> {
                         decoration: BoxDecoration(
                           color: const Color(0xFFF4EBD0),
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: const Color(0xFF2C1810), width: 1.5),
+                          border: Border.all(
+                            color: const Color(0xFF2C1810),
+                            width: 1.5,
+                          ),
                         ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -532,13 +702,20 @@ class _TeknisiChecklistScreenState extends State<TeknisiChecklistScreen> {
                         width: double.infinity,
                         padding: const EdgeInsets.symmetric(vertical: 12),
                         decoration: BoxDecoration(
-                          color: hasFeedback ? Colors.white : const Color(0xFFE5B94C),
+                          color: hasFeedback
+                              ? Colors.white
+                              : const Color(0xFFE5B94C),
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: const Color(0xFF2C1810), width: 2.5),
+                          border: Border.all(
+                            color: const Color(0xFF2C1810),
+                            width: 2.5,
+                          ),
                         ),
                         child: Center(
                           child: Text(
-                            hasFeedback ? 'LIHAT DETAIL JAWABAN' : 'BERI SARAN / FEEDBACK',
+                            hasFeedback
+                                ? 'LIHAT DETAIL JAWABAN'
+                                : 'BERI SARAN / FEEDBACK',
                             style: GoogleFonts.plusJakartaSans(
                               color: const Color(0xFF2C1810),
                               fontWeight: FontWeight.w900,
@@ -571,10 +748,7 @@ class _TeknisiChecklistScreenState extends State<TeknisiChecklistScreen> {
               shape: BoxShape.circle,
               border: Border.all(color: const Color(0xFF2C1810), width: 3),
               boxShadow: const [
-                BoxShadow(
-                  color: Color(0xFF2C1810),
-                  offset: Offset(4, 4),
-                ),
+                BoxShadow(color: Color(0xFF2C1810), offset: Offset(4, 4)),
               ],
             ),
             child: const Icon(
@@ -630,18 +804,27 @@ class _TeknisiChecklistScreenState extends State<TeknisiChecklistScreen> {
         ),
         title: Text(
           'HAPUS FORM?',
-          style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w900, color: const Color(0xFF2C1810)),
+          style: GoogleFonts.plusJakartaSans(
+            fontWeight: FontWeight.w900,
+            color: const Color(0xFF2C1810),
+          ),
         ),
         content: Text(
           'Apakah Anda yakin ingin menghapus form checklist ini? Seluruh data riwayat checklist user yang terkait juga akan dihapus.',
-          style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700, color: const Color(0xFF2C1810)),
+          style: GoogleFonts.plusJakartaSans(
+            fontWeight: FontWeight.w700,
+            color: const Color(0xFF2C1810),
+          ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
             child: Text(
               'BATAL',
-              style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w900, color: const Color(0xFF2C1810)),
+              style: GoogleFonts.plusJakartaSans(
+                fontWeight: FontWeight.w900,
+                color: const Color(0xFF2C1810),
+              ),
             ),
           ),
           ElevatedButton(
@@ -651,14 +834,19 @@ class _TeknisiChecklistScreenState extends State<TeknisiChecklistScreen> {
             ),
             onPressed: () async {
               Navigator.of(context).pop();
-              final success = await context.read<ChecklistProvider>().deleteForm(formId);
+              final success = await context
+                  .read<ChecklistProvider>()
+                  .deleteForm(formId);
               if (success && mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     backgroundColor: const Color(0xFF5AB974),
                     content: Text(
                       'Form berhasil dihapus!',
-                      style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800, color: Colors.white),
+                      style: GoogleFonts.plusJakartaSans(
+                        fontWeight: FontWeight.w800,
+                        color: Colors.white,
+                      ),
                     ),
                   ),
                 );
@@ -666,7 +854,10 @@ class _TeknisiChecklistScreenState extends State<TeknisiChecklistScreen> {
             },
             child: Text(
               'HAPUS',
-              style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w900, color: Colors.white),
+              style: GoogleFonts.plusJakartaSans(
+                fontWeight: FontWeight.w900,
+                color: Colors.white,
+              ),
             ),
           ),
         ],
@@ -695,13 +886,15 @@ class CreateChecklistFormScreen extends StatefulWidget {
   const CreateChecklistFormScreen({super.key});
 
   @override
-  State<CreateChecklistFormScreen> createState() => _CreateChecklistFormScreenState();
+  State<CreateChecklistFormScreen> createState() =>
+      _CreateChecklistFormScreenState();
 }
 
 class _CreateChecklistFormScreenState extends State<CreateChecklistFormScreen> {
   final _formKey = GlobalKey<FormState>();
   final _judulController = TextEditingController();
   final _deskripsiController = TextEditingController();
+  String _selectedKategori = 'Harian';
   final List<TextEditingController> _itemControllers = [
     TextEditingController(text: 'Oli Mesin'),
     TextEditingController(text: 'Rem'),
@@ -747,7 +940,10 @@ class _CreateChecklistFormScreenState extends State<CreateChecklistFormScreen> {
                       decoration: BoxDecoration(
                         color: const Color(0xFF4A90D9),
                         borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: const Color(0xFF2C1810), width: 4),
+                        border: Border.all(
+                          color: const Color(0xFF2C1810),
+                          width: 4,
+                        ),
                         boxShadow: const [
                           BoxShadow(
                             color: Color(0xFF2C1810),
@@ -755,11 +951,17 @@ class _CreateChecklistFormScreenState extends State<CreateChecklistFormScreen> {
                           ),
                         ],
                       ),
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
+                      ),
                       child: Row(
                         children: [
                           IconButton(
-                            icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
+                            icon: const Icon(
+                              Icons.arrow_back_ios_new_rounded,
+                              color: Colors.white,
+                            ),
                             onPressed: () => Navigator.of(context).pop(),
                           ),
                           Expanded(
@@ -782,7 +984,10 @@ class _CreateChecklistFormScreenState extends State<CreateChecklistFormScreen> {
 
                   Expanded(
                     child: SingleChildScrollView(
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 8,
+                      ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -799,9 +1004,16 @@ class _CreateChecklistFormScreenState extends State<CreateChecklistFormScreen> {
                           const SizedBox(height: 6),
                           TextFormField(
                             controller: _judulController,
-                            validator: (val) => val == null || val.isEmpty ? 'Judul wajib diisi' : null,
-                            style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800, fontSize: 14),
-                            decoration: _inputDecoration('Contoh: Pengecekan Rutin Mingguan'),
+                            validator: (val) => val == null || val.isEmpty
+                                ? 'Judul wajib diisi'
+                                : null,
+                            style: GoogleFonts.plusJakartaSans(
+                              fontWeight: FontWeight.w800,
+                              fontSize: 14,
+                            ),
+                            decoration: _inputDecoration(
+                              'Contoh: Pengecekan Rutin Mingguan',
+                            ),
                           ),
                           const SizedBox(height: 20),
 
@@ -819,8 +1031,50 @@ class _CreateChecklistFormScreenState extends State<CreateChecklistFormScreen> {
                           TextFormField(
                             controller: _deskripsiController,
                             maxLines: 2,
-                            style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800, fontSize: 14),
-                            decoration: _inputDecoration('Petunjuk pengisian untuk mahasiswi...'),
+                            style: GoogleFonts.plusJakartaSans(
+                              fontWeight: FontWeight.w800,
+                              fontSize: 14,
+                            ),
+                            decoration: _inputDecoration(
+                              'Petunjuk pengisian untuk mahasiswi...',
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+
+                          // Kategori
+                          Text(
+                            'KATEGORI CHECKLIST',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontWeight: FontWeight.w900,
+                              fontSize: 11,
+                              color: const Color(0xFF2C1810),
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          DropdownButtonFormField<String>(
+                            initialValue: _selectedKategori,
+                            style: GoogleFonts.plusJakartaSans(
+                              fontWeight: FontWeight.w800,
+                              fontSize: 14,
+                              color: const Color(0xFF2C1810),
+                            ),
+                            dropdownColor: Colors.white,
+                            borderRadius: BorderRadius.circular(12),
+                            onChanged: (val) {
+                              if (val != null) {
+                                setState(() => _selectedKategori = val);
+                              }
+                            },
+                            items: ['Harian', 'Mingguan', 'Bulanan'].map((
+                              kategori,
+                            ) {
+                              return DropdownMenuItem<String>(
+                                value: kategori,
+                                child: Text(kategori),
+                              );
+                            }).toList(),
+                            decoration: _inputDecoration('Pilih Kategori'),
                           ),
                           const SizedBox(height: 24),
 
@@ -840,10 +1094,16 @@ class _CreateChecklistFormScreenState extends State<CreateChecklistFormScreen> {
                               TextButton.icon(
                                 onPressed: () {
                                   setState(() {
-                                    _itemControllers.add(TextEditingController());
+                                    _itemControllers.add(
+                                      TextEditingController(),
+                                    );
                                   });
                                 },
-                                icon: const Icon(Icons.add_circle_outline_rounded, color: Color(0xFF4A90D9), size: 18),
+                                icon: const Icon(
+                                  Icons.add_circle_outline_rounded,
+                                  color: Color(0xFF4A90D9),
+                                  size: 18,
+                                ),
                                 label: Text(
                                   'TAMBAH',
                                   style: GoogleFonts.plusJakartaSans(
@@ -869,9 +1129,17 @@ class _CreateChecklistFormScreenState extends State<CreateChecklistFormScreen> {
                                     Expanded(
                                       child: TextFormField(
                                         controller: _itemControllers[index],
-                                        validator: (val) => val == null || val.isEmpty ? 'Parameter wajib diisi' : null,
-                                        style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800, fontSize: 14),
-                                        decoration: _inputDecoration('Nama parameter, misal: Tekanan Ban'),
+                                        validator: (val) =>
+                                            val == null || val.isEmpty
+                                            ? 'Parameter wajib diisi'
+                                            : null,
+                                        style: GoogleFonts.plusJakartaSans(
+                                          fontWeight: FontWeight.w800,
+                                          fontSize: 14,
+                                        ),
+                                        decoration: _inputDecoration(
+                                          'Nama parameter, misal: Tekanan Ban',
+                                        ),
                                       ),
                                     ),
                                     const SizedBox(width: 8),
@@ -886,10 +1154,19 @@ class _CreateChecklistFormScreenState extends State<CreateChecklistFormScreen> {
                                         padding: const EdgeInsets.all(12),
                                         decoration: BoxDecoration(
                                           color: const Color(0xFFD9614C),
-                                          borderRadius: BorderRadius.circular(12),
-                                          border: Border.all(color: const Color(0xFF2C1810), width: 2.5),
+                                          borderRadius: BorderRadius.circular(
+                                            12,
+                                          ),
+                                          border: Border.all(
+                                            color: const Color(0xFF2C1810),
+                                            width: 2.5,
+                                          ),
                                         ),
-                                        child: const Icon(Icons.delete_outline_rounded, color: Colors.white, size: 20),
+                                        child: const Icon(
+                                          Icons.delete_outline_rounded,
+                                          color: Colors.white,
+                                          size: 20,
+                                        ),
                                       ),
                                     ),
                                   ],
@@ -913,7 +1190,10 @@ class _CreateChecklistFormScreenState extends State<CreateChecklistFormScreen> {
                         decoration: BoxDecoration(
                           color: const Color(0xFF4A90D9),
                           borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: const Color(0xFF2C1810), width: 4),
+                          border: Border.all(
+                            color: const Color(0xFF2C1810),
+                            width: 4,
+                          ),
                           boxShadow: const [
                             BoxShadow(
                               color: Color(0xFF2C1810),
@@ -972,7 +1252,10 @@ class _CreateChecklistFormScreenState extends State<CreateChecklistFormScreen> {
           backgroundColor: const Color(0xFFD9614C),
           content: Text(
             'Form harus memiliki minimal 1 parameter pengecekan!',
-            style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800, color: Colors.white),
+            style: GoogleFonts.plusJakartaSans(
+              fontWeight: FontWeight.w800,
+              color: Colors.white,
+            ),
           ),
         ),
       );
@@ -994,11 +1277,15 @@ class _CreateChecklistFormScreenState extends State<CreateChecklistFormScreen> {
       ),
     );
 
-    final itemNames = _itemControllers.map((ctrl) => ctrl.text.trim()).where((t) => t.isNotEmpty).toList();
+    final itemNames = _itemControllers
+        .map((ctrl) => ctrl.text.trim())
+        .where((t) => t.isNotEmpty)
+        .toList();
 
     final success = await provider.createForm(
       judul: _judulController.text.trim(),
       deskripsi: _deskripsiController.text.trim(),
+      kategori: _selectedKategori,
       itemNames: itemNames,
     );
 
@@ -1010,7 +1297,10 @@ class _CreateChecklistFormScreenState extends State<CreateChecklistFormScreen> {
             backgroundColor: const Color(0xFF5AB974),
             content: Text(
               'Form checklist berhasil dipublikasikan!',
-              style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800, color: Colors.white),
+              style: GoogleFonts.plusJakartaSans(
+                fontWeight: FontWeight.w800,
+                color: Colors.white,
+              ),
             ),
           ),
         );
@@ -1021,7 +1311,10 @@ class _CreateChecklistFormScreenState extends State<CreateChecklistFormScreen> {
             backgroundColor: const Color(0xFFD9614C),
             content: Text(
               provider.errorMessage ?? 'Gagal membuat form.',
-              style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800, color: Colors.white),
+              style: GoogleFonts.plusJakartaSans(
+                fontWeight: FontWeight.w800,
+                color: Colors.white,
+              ),
             ),
           ),
         );
@@ -1036,7 +1329,8 @@ class EvaluateChecklistScreen extends StatefulWidget {
   const EvaluateChecklistScreen({super.key, required this.result});
 
   @override
-  State<EvaluateChecklistScreen> createState() => _EvaluateChecklistScreenState();
+  State<EvaluateChecklistScreen> createState() =>
+      _EvaluateChecklistScreenState();
 }
 
 class _EvaluateChecklistScreenState extends State<EvaluateChecklistScreen> {
@@ -1062,7 +1356,8 @@ class _EvaluateChecklistScreenState extends State<EvaluateChecklistScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final hasFeedback = widget.result.feedback != null && widget.result.feedback!.isNotEmpty;
+    final hasFeedback =
+        widget.result.feedback != null && widget.result.feedback!.isNotEmpty;
     final formattedDate = widget.result.createdAt != null
         ? _formatDate(widget.result.createdAt!.toLocal())
         : 'Hari ini';
@@ -1091,7 +1386,10 @@ class _EvaluateChecklistScreenState extends State<EvaluateChecklistScreen> {
                     decoration: BoxDecoration(
                       color: const Color(0xFF4A90D9),
                       borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: const Color(0xFF2C1810), width: 4),
+                      border: Border.all(
+                        color: const Color(0xFF2C1810),
+                        width: 4,
+                      ),
                       boxShadow: const [
                         BoxShadow(
                           color: Color(0xFF2C1810),
@@ -1099,11 +1397,17 @@ class _EvaluateChecklistScreenState extends State<EvaluateChecklistScreen> {
                         ),
                       ],
                     ),
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
                     child: Row(
                       children: [
                         IconButton(
-                          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
+                          icon: const Icon(
+                            Icons.arrow_back_ios_new_rounded,
+                            color: Colors.white,
+                          ),
                           onPressed: () => Navigator.of(context).pop(),
                         ),
                         Expanded(
@@ -1136,7 +1440,10 @@ class _EvaluateChecklistScreenState extends State<EvaluateChecklistScreen> {
                           decoration: BoxDecoration(
                             color: Colors.white,
                             borderRadius: BorderRadius.circular(20),
-                            border: Border.all(color: const Color(0xFF2C1810), width: 3),
+                            border: Border.all(
+                              color: const Color(0xFF2C1810),
+                              width: 3,
+                            ),
                           ),
                           child: Row(
                             children: [
@@ -1153,7 +1460,8 @@ class _EvaluateChecklistScreenState extends State<EvaluateChecklistScreen> {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
-                                      (widget.result.userName ?? 'MAHASISWI').toUpperCase(),
+                                      (widget.result.userName ?? 'MAHASISWI')
+                                          .toUpperCase(),
                                       style: GoogleFonts.plusJakartaSans(
                                         fontWeight: FontWeight.w900,
                                         fontSize: 15,
@@ -1166,7 +1474,9 @@ class _EvaluateChecklistScreenState extends State<EvaluateChecklistScreen> {
                                       style: GoogleFonts.plusJakartaSans(
                                         fontWeight: FontWeight.w700,
                                         fontSize: 12,
-                                        color: const Color(0xFF2C1810).withValues(alpha: 0.7),
+                                        color: const Color(
+                                          0xFF2C1810,
+                                        ).withValues(alpha: 0.7),
                                       ),
                                     ),
                                     Text(
@@ -1174,7 +1484,9 @@ class _EvaluateChecklistScreenState extends State<EvaluateChecklistScreen> {
                                       style: GoogleFonts.plusJakartaSans(
                                         fontWeight: FontWeight.w700,
                                         fontSize: 11,
-                                        color: const Color(0xFF2C1810).withValues(alpha: 0.5),
+                                        color: const Color(
+                                          0xFF2C1810,
+                                        ).withValues(alpha: 0.5),
                                       ),
                                     ),
                                   ],
@@ -1199,13 +1511,17 @@ class _EvaluateChecklistScreenState extends State<EvaluateChecklistScreen> {
                         // List answers
                         ...widget.result.jawaban.entries.map((entry) {
                           final item = entry.key;
-                          final detail = Map<String, dynamic>.from(entry.value as Map);
+                          final detail = Map<String, dynamic>.from(
+                            entry.value as Map,
+                          );
                           final status = detail['status'] as String? ?? 'Baik';
                           final catatan = detail['catatan'] as String? ?? '';
 
                           Color badgeColor = const Color(0xFF5AB974);
-                          if (status == 'Perlu Servis') badgeColor = const Color(0xFFE5B94C);
-                          if (status == 'Kritis') badgeColor = const Color(0xFFD9614C);
+                          if (status == 'Perlu Servis')
+                            badgeColor = const Color(0xFFE5B94C);
+                          if (status == 'Kritis')
+                            badgeColor = const Color(0xFFD9614C);
 
                           return Container(
                             margin: const EdgeInsets.only(bottom: 16),
@@ -1213,13 +1529,17 @@ class _EvaluateChecklistScreenState extends State<EvaluateChecklistScreen> {
                             decoration: BoxDecoration(
                               color: Colors.white,
                               borderRadius: BorderRadius.circular(16),
-                              border: Border.all(color: const Color(0xFF2C1810), width: 2.5),
+                              border: Border.all(
+                                color: const Color(0xFF2C1810),
+                                width: 2.5,
+                              ),
                             ),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
                                   children: [
                                     Text(
                                       item.toUpperCase(),
@@ -1230,18 +1550,26 @@ class _EvaluateChecklistScreenState extends State<EvaluateChecklistScreen> {
                                       ),
                                     ),
                                     Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 10,
+                                        vertical: 4,
+                                      ),
                                       decoration: BoxDecoration(
                                         color: badgeColor,
                                         borderRadius: BorderRadius.circular(8),
-                                        border: Border.all(color: const Color(0xFF2C1810), width: 1.5),
+                                        border: Border.all(
+                                          color: const Color(0xFF2C1810),
+                                          width: 1.5,
+                                        ),
                                       ),
                                       child: Text(
                                         status.toUpperCase(),
                                         style: GoogleFonts.plusJakartaSans(
                                           fontWeight: FontWeight.w900,
                                           fontSize: 9,
-                                          color: status == 'Perlu Servis' ? const Color(0xFF2C1810) : Colors.white,
+                                          color: status == 'Perlu Servis'
+                                              ? const Color(0xFF2C1810)
+                                              : Colors.white,
                                         ),
                                       ),
                                     ),
@@ -1254,7 +1582,9 @@ class _EvaluateChecklistScreenState extends State<EvaluateChecklistScreen> {
                                     style: GoogleFonts.plusJakartaSans(
                                       fontWeight: FontWeight.w900,
                                       fontSize: 10,
-                                      color: const Color(0xFF2C1810).withValues(alpha: 0.5),
+                                      color: const Color(
+                                        0xFF2C1810,
+                                      ).withValues(alpha: 0.5),
                                     ),
                                   ),
                                   const SizedBox(height: 2),
@@ -1289,23 +1619,37 @@ class _EvaluateChecklistScreenState extends State<EvaluateChecklistScreen> {
                           controller: _feedbackController,
                           maxLines: 4,
                           enabled: !hasFeedback,
-                          style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800, fontSize: 13),
+                          style: GoogleFonts.plusJakartaSans(
+                            fontWeight: FontWeight.w800,
+                            fontSize: 13,
+                          ),
                           decoration: InputDecoration(
-                            hintText: 'Tulis saran, instruksi servis, atau instruksi tindak lanjut...',
+                            hintText:
+                                'Tulis saran, instruksi servis, atau instruksi tindak lanjut...',
                             hintStyle: GoogleFonts.plusJakartaSans(
                               fontWeight: FontWeight.w700,
                               fontSize: 12,
-                              color: const Color(0xFF2C1810).withValues(alpha: 0.4),
+                              color: const Color(
+                                0xFF2C1810,
+                              ).withValues(alpha: 0.4),
                             ),
                             filled: true,
-                            fillColor: hasFeedback ? Colors.grey.shade200 : Colors.white,
+                            fillColor: hasFeedback
+                                ? Colors.grey.shade200
+                                : Colors.white,
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(16),
-                              borderSide: const BorderSide(color: Color(0xFF2C1810), width: 2.5),
+                              borderSide: const BorderSide(
+                                color: Color(0xFF2C1810),
+                                width: 2.5,
+                              ),
                             ),
                             focusedBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(16),
-                              borderSide: const BorderSide(color: Color(0xFF2C1810), width: 3),
+                              borderSide: const BorderSide(
+                                color: Color(0xFF2C1810),
+                                width: 3,
+                              ),
                             ),
                           ),
                         ),
@@ -1327,7 +1671,10 @@ class _EvaluateChecklistScreenState extends State<EvaluateChecklistScreen> {
                         decoration: BoxDecoration(
                           color: const Color(0xFFE5B94C),
                           borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: const Color(0xFF2C1810), width: 4),
+                          border: Border.all(
+                            color: const Color(0xFF2C1810),
+                            width: 4,
+                          ),
                           boxShadow: const [
                             BoxShadow(
                               color: Color(0xFF2C1810),
@@ -1364,7 +1711,10 @@ class _EvaluateChecklistScreenState extends State<EvaluateChecklistScreen> {
           backgroundColor: const Color(0xFFD9614C),
           content: Text(
             'Saran feedback tidak boleh kosong.',
-            style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800, color: Colors.white),
+            style: GoogleFonts.plusJakartaSans(
+              fontWeight: FontWeight.w800,
+              color: Colors.white,
+            ),
           ),
         ),
       );
@@ -1397,7 +1747,10 @@ class _EvaluateChecklistScreenState extends State<EvaluateChecklistScreen> {
             backgroundColor: const Color(0xFF5AB974),
             content: Text(
               'Rekomendasi berhasil dikirim ke user!',
-              style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800, color: Colors.white),
+              style: GoogleFonts.plusJakartaSans(
+                fontWeight: FontWeight.w800,
+                color: Colors.white,
+              ),
             ),
           ),
         );
@@ -1408,7 +1761,10 @@ class _EvaluateChecklistScreenState extends State<EvaluateChecklistScreen> {
             backgroundColor: const Color(0xFFD9614C),
             content: Text(
               provider.errorMessage ?? 'Gagal mengirim rekomendasi.',
-              style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800, color: Colors.white),
+              style: GoogleFonts.plusJakartaSans(
+                fontWeight: FontWeight.w800,
+                color: Colors.white,
+              ),
             ),
           ),
         );
@@ -1423,7 +1779,8 @@ class EditChecklistFormScreen extends StatefulWidget {
   const EditChecklistFormScreen({super.key, required this.form});
 
   @override
-  State<EditChecklistFormScreen> createState() => _EditChecklistFormScreenState();
+  State<EditChecklistFormScreen> createState() =>
+      _EditChecklistFormScreenState();
 }
 
 class _EditChecklistFormScreenState extends State<EditChecklistFormScreen> {
@@ -1431,12 +1788,16 @@ class _EditChecklistFormScreenState extends State<EditChecklistFormScreen> {
   late final TextEditingController _judulController;
   late final TextEditingController _deskripsiController;
   late final List<TextEditingController> _itemControllers;
+  late String _selectedKategori;
 
   @override
   void initState() {
     super.initState();
     _judulController = TextEditingController(text: widget.form.judul);
-    _deskripsiController = TextEditingController(text: widget.form.deskripsi ?? '');
+    _deskripsiController = TextEditingController(
+      text: widget.form.deskripsi ?? '',
+    );
+    _selectedKategori = widget.form.kategori;
     _itemControllers = widget.form.items
         .map((item) => TextEditingController(text: item.itemName))
         .toList();
@@ -1483,7 +1844,10 @@ class _EditChecklistFormScreenState extends State<EditChecklistFormScreen> {
                       decoration: BoxDecoration(
                         color: const Color(0xFF4A90D9),
                         borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: const Color(0xFF2C1810), width: 4),
+                        border: Border.all(
+                          color: const Color(0xFF2C1810),
+                          width: 4,
+                        ),
                         boxShadow: const [
                           BoxShadow(
                             color: Color(0xFF2C1810),
@@ -1491,11 +1855,17 @@ class _EditChecklistFormScreenState extends State<EditChecklistFormScreen> {
                           ),
                         ],
                       ),
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
+                      ),
                       child: Row(
                         children: [
                           IconButton(
-                            icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
+                            icon: const Icon(
+                              Icons.arrow_back_ios_new_rounded,
+                              color: Colors.white,
+                            ),
                             onPressed: () => Navigator.of(context).pop(),
                           ),
                           Expanded(
@@ -1518,7 +1888,10 @@ class _EditChecklistFormScreenState extends State<EditChecklistFormScreen> {
 
                   Expanded(
                     child: SingleChildScrollView(
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 8,
+                      ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -1535,9 +1908,16 @@ class _EditChecklistFormScreenState extends State<EditChecklistFormScreen> {
                           const SizedBox(height: 6),
                           TextFormField(
                             controller: _judulController,
-                            validator: (val) => val == null || val.isEmpty ? 'Judul wajib diisi' : null,
-                            style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800, fontSize: 14),
-                            decoration: _inputDecoration('Contoh: Pengecekan Rutin Mingguan'),
+                            validator: (val) => val == null || val.isEmpty
+                                ? 'Judul wajib diisi'
+                                : null,
+                            style: GoogleFonts.plusJakartaSans(
+                              fontWeight: FontWeight.w800,
+                              fontSize: 14,
+                            ),
+                            decoration: _inputDecoration(
+                              'Contoh: Pengecekan Rutin Mingguan',
+                            ),
                           ),
                           const SizedBox(height: 20),
 
@@ -1555,8 +1935,50 @@ class _EditChecklistFormScreenState extends State<EditChecklistFormScreen> {
                           TextFormField(
                             controller: _deskripsiController,
                             maxLines: 2,
-                            style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800, fontSize: 14),
-                            decoration: _inputDecoration('Petunjuk pengisian untuk mahasiswi...'),
+                            style: GoogleFonts.plusJakartaSans(
+                              fontWeight: FontWeight.w800,
+                              fontSize: 14,
+                            ),
+                            decoration: _inputDecoration(
+                              'Petunjuk pengisian untuk mahasiswi...',
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+
+                          // Kategori
+                          Text(
+                            'KATEGORI CHECKLIST',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontWeight: FontWeight.w900,
+                              fontSize: 11,
+                              color: const Color(0xFF2C1810),
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          DropdownButtonFormField<String>(
+                            initialValue: _selectedKategori,
+                            style: GoogleFonts.plusJakartaSans(
+                              fontWeight: FontWeight.w800,
+                              fontSize: 14,
+                              color: const Color(0xFF2C1810),
+                            ),
+                            dropdownColor: Colors.white,
+                            borderRadius: BorderRadius.circular(12),
+                            onChanged: (val) {
+                              if (val != null) {
+                                setState(() => _selectedKategori = val);
+                              }
+                            },
+                            items: ['Harian', 'Mingguan', 'Bulanan'].map((
+                              kategori,
+                            ) {
+                              return DropdownMenuItem<String>(
+                                value: kategori,
+                                child: Text(kategori),
+                              );
+                            }).toList(),
+                            decoration: _inputDecoration('Pilih Kategori'),
                           ),
                           const SizedBox(height: 24),
 
@@ -1576,10 +1998,16 @@ class _EditChecklistFormScreenState extends State<EditChecklistFormScreen> {
                               TextButton.icon(
                                 onPressed: () {
                                   setState(() {
-                                    _itemControllers.add(TextEditingController());
+                                    _itemControllers.add(
+                                      TextEditingController(),
+                                    );
                                   });
                                 },
-                                icon: const Icon(Icons.add_circle_outline_rounded, color: Color(0xFF4A90D9), size: 18),
+                                icon: const Icon(
+                                  Icons.add_circle_outline_rounded,
+                                  color: Color(0xFF4A90D9),
+                                  size: 18,
+                                ),
                                 label: Text(
                                   'TAMBAH',
                                   style: GoogleFonts.plusJakartaSans(
@@ -1605,9 +2033,17 @@ class _EditChecklistFormScreenState extends State<EditChecklistFormScreen> {
                                     Expanded(
                                       child: TextFormField(
                                         controller: _itemControllers[index],
-                                        validator: (val) => val == null || val.isEmpty ? 'Parameter wajib diisi' : null,
-                                        style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800, fontSize: 14),
-                                        decoration: _inputDecoration('Nama parameter, misal: Tekanan Ban'),
+                                        validator: (val) =>
+                                            val == null || val.isEmpty
+                                            ? 'Parameter wajib diisi'
+                                            : null,
+                                        style: GoogleFonts.plusJakartaSans(
+                                          fontWeight: FontWeight.w800,
+                                          fontSize: 14,
+                                        ),
+                                        decoration: _inputDecoration(
+                                          'Nama parameter, misal: Tekanan Ban',
+                                        ),
                                       ),
                                     ),
                                     const SizedBox(width: 8),
@@ -1623,11 +2059,24 @@ class _EditChecklistFormScreenState extends State<EditChecklistFormScreen> {
                                       child: Container(
                                         padding: const EdgeInsets.all(12),
                                         decoration: BoxDecoration(
-                                          color: _itemControllers.length > 1 ? const Color(0xFFD9614C) : const Color(0xFF2C1810).withValues(alpha: 0.3),
-                                          borderRadius: BorderRadius.circular(12),
-                                          border: Border.all(color: const Color(0xFF2C1810), width: 2.5),
+                                          color: _itemControllers.length > 1
+                                              ? const Color(0xFFD9614C)
+                                              : const Color(
+                                                  0xFF2C1810,
+                                                ).withValues(alpha: 0.3),
+                                          borderRadius: BorderRadius.circular(
+                                            12,
+                                          ),
+                                          border: Border.all(
+                                            color: const Color(0xFF2C1810),
+                                            width: 2.5,
+                                          ),
                                         ),
-                                        child: const Icon(Icons.delete_outline_rounded, color: Colors.white, size: 20),
+                                        child: const Icon(
+                                          Icons.delete_outline_rounded,
+                                          color: Colors.white,
+                                          size: 20,
+                                        ),
                                       ),
                                     ),
                                   ],
@@ -1651,7 +2100,10 @@ class _EditChecklistFormScreenState extends State<EditChecklistFormScreen> {
                         decoration: BoxDecoration(
                           color: const Color(0xFFE5B94C),
                           borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: const Color(0xFF2C1810), width: 4),
+                          border: Border.all(
+                            color: const Color(0xFF2C1810),
+                            width: 4,
+                          ),
                           boxShadow: const [
                             BoxShadow(
                               color: Color(0xFF2C1810),
@@ -1710,7 +2162,10 @@ class _EditChecklistFormScreenState extends State<EditChecklistFormScreen> {
           backgroundColor: const Color(0xFFD9614C),
           content: Text(
             'Form harus memiliki minimal 1 parameter pengecekan!',
-            style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800, color: Colors.white),
+            style: GoogleFonts.plusJakartaSans(
+              fontWeight: FontWeight.w800,
+              color: Colors.white,
+            ),
           ),
         ),
       );
@@ -1732,12 +2187,16 @@ class _EditChecklistFormScreenState extends State<EditChecklistFormScreen> {
       ),
     );
 
-    final itemNames = _itemControllers.map((ctrl) => ctrl.text.trim()).where((t) => t.isNotEmpty).toList();
+    final itemNames = _itemControllers
+        .map((ctrl) => ctrl.text.trim())
+        .where((t) => t.isNotEmpty)
+        .toList();
 
     final success = await provider.updateForm(
       formId: widget.form.id,
       judul: _judulController.text.trim(),
       deskripsi: _deskripsiController.text.trim(),
+      kategori: _selectedKategori,
       itemNames: itemNames,
     );
 
@@ -1749,7 +2208,10 @@ class _EditChecklistFormScreenState extends State<EditChecklistFormScreen> {
             backgroundColor: const Color(0xFF5AB974),
             content: Text(
               'Form checklist berhasil diperbarui!',
-              style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800, color: Colors.white),
+              style: GoogleFonts.plusJakartaSans(
+                fontWeight: FontWeight.w800,
+                color: Colors.white,
+              ),
             ),
           ),
         );
@@ -1760,7 +2222,10 @@ class _EditChecklistFormScreenState extends State<EditChecklistFormScreen> {
             backgroundColor: const Color(0xFFD9614C),
             content: Text(
               provider.errorMessage ?? 'Gagal memperbarui form.',
-              style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800, color: Colors.white),
+              style: GoogleFonts.plusJakartaSans(
+                fontWeight: FontWeight.w800,
+                color: Colors.white,
+              ),
             ),
           ),
         );

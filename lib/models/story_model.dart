@@ -15,6 +15,9 @@ class StoryModel {
   // Check if this story is actually a post (mediaUrl is stored as a JSON array starting with '[')
   bool get isPost => mediaUrl.startsWith('[');
 
+  // Check if this story is a video Reel
+  bool get isReel => mediaUrl.contains('/reels/');
+
   // Get parsed list of image URLs from the JSON array, or fallback to single URL list
   List<String> get postImages {
     if (!isPost) return [mediaUrl];

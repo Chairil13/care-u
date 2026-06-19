@@ -5,6 +5,7 @@ import '../../providers/auth_provider.dart';
 import '../../providers/motorcycle_provider.dart';
 import '../../providers/story_provider.dart';
 import '../../widgets/stories_bar.dart';
+import '../../widgets/reels_bar.dart';
 import '../../widgets/post_card.dart';
 
 class UserHomeScreen extends StatefulWidget {
@@ -160,6 +161,7 @@ class _UserHomeScreenState extends State<UserHomeScreen> {
                     const SizedBox(height: 24),
                     const StoriesBar(),
                     const SizedBox(height: 24),
+                    const ReelsBar(),
                     _buildPostsSection(),
                   ],
                 ),

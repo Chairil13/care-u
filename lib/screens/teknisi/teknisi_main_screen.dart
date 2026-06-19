@@ -5,8 +5,6 @@ import '../../providers/chat_provider.dart';
 import '../../providers/checklist_provider.dart';
 import '../../models/user_model.dart';
 import '../chat/chat_detail_screen.dart';
-import '../user/bookmarked_posts_screen.dart';
-
 import 'teknisi_home_screen.dart';
 import 'teknisi_profile_screen.dart';
 import 'teknisi_checklist_screen.dart';
@@ -214,37 +212,17 @@ class _ChatPlaceholderState extends State<_ChatPlaceholder> {
                   ],
                 ),
                 padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-                child: Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    Text(
-                      'CHAT DENGAN USER',
-                      textAlign: TextAlign.center,
-                      style: GoogleFonts.plusJakartaSans(
-                        fontWeight: FontWeight.w900,
-                        fontSize: 18,
-                        color: Colors.white,
-                        letterSpacing: 1,
-                      ),
+                child: Center(
+                  child: Text(
+                    'CHAT DENGAN USER',
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.plusJakartaSans(
+                      fontWeight: FontWeight.w900,
+                      fontSize: 18,
+                      color: Colors.white,
+                      letterSpacing: 1,
                     ),
-                    Positioned(
-                      right: 0,
-                      child: GestureDetector(
-                        onTap: () {
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (context) => const BookmarkedPostsScreen(),
-                            ),
-                          );
-                        },
-                        child: const Icon(
-                          Icons.bookmark_rounded,
-                          color: Colors.white,
-                          size: 24,
-                        ),
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
               ),
             ),

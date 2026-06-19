@@ -8,8 +8,11 @@ import '../../providers/auth_provider.dart';
 import 'edit_profile_screen.dart';
 import 'edit_password_screen.dart';
 import 'motorcycle_list_screen.dart';
+import 'bookmarked_posts_screen.dart';
 import '../../providers/motorcycle_provider.dart';
 import '../../providers/story_provider.dart';
+import '../auth/login_screen.dart';
+
 
 class UserProfileScreen extends StatelessWidget {
   const UserProfileScreen({super.key});
@@ -61,6 +64,10 @@ class UserProfileScreen extends StatelessWidget {
 
             // Account Settings Bento
             _buildAccountSettings(context),
+            const SizedBox(height: 32),
+
+            // Saved Content Section
+            _buildSavedContentSection(context),
             const SizedBox(height: 32),
 
             // My Motorcycle Section
@@ -400,6 +407,92 @@ class UserProfileScreen extends StatelessWidget {
     );
   }
 
+  Widget _buildSavedContentSection(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'SAVED CONTENT',
+          style: GoogleFonts.plusJakartaSans(
+            fontSize: 14,
+            fontWeight: FontWeight.w900,
+            color: const Color(0xFF2C1810),
+            letterSpacing: 1,
+          ),
+        ),
+        const SizedBox(height: 16),
+        GestureDetector(
+          onTap: () => Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const BookmarkedPostsScreen()),
+          ),
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: const Color(0xFF2C1810), width: 3),
+              boxShadow: const [
+                BoxShadow(color: Color(0xFF2C1810), offset: Offset(4, 4)),
+              ],
+            ),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFE5B94C),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: const Color(0xFF2C1810), width: 2),
+                  ),
+                  child: const Icon(Icons.bookmark_rounded, color: Color(0xFF2C1810), size: 20),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'POSTINGAN & REELS TERSIMPAN',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w900,
+                          color: const Color(0xFF2C1810),
+                        ),
+                      ),
+                      Text(
+                        'Akses cepat postingan dan video reels yang Anda bookmark',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 9,
+                          fontWeight: FontWeight.w700,
+                          color: const Color(0xFF2C1810).withValues(alpha: 0.6),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.all(4),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF4EBD0),
+                    shape: BoxShape.circle,
+                    border: Border.all(color: const Color(0xFF2C1810), width: 1.5),
+                  ),
+                  child: const Icon(
+                    Icons.arrow_forward_rounded,
+                    color: Color(0xFF2C1810),
+                    size: 16,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget _buildRetroMenuItem(
     BuildContext context,
     String title,
@@ -685,6 +778,13 @@ class UserProfileScreen extends StatelessWidget {
             navigator.pop(); // Dismiss loading dialog
           } catch (e) {
             debugPrint('Error popping loading dialog: $e');
+          }
+
+          if (navigator.mounted) {
+            navigator.pushAndRemoveUntil(
+              MaterialPageRoute(builder: (_) => const LoginScreen()),
+              (route) => false,
+            );
           }
         }
       },

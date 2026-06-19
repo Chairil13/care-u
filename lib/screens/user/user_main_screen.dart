@@ -9,7 +9,6 @@ import '../chat/chat_detail_screen.dart';
 import 'user_home_screen.dart';
 import 'user_profile_screen.dart';
 import 'user_checklist_screen.dart';
-import 'bookmarked_posts_screen.dart';
 
 class UserMainScreen extends StatefulWidget {
   const UserMainScreen({super.key});
@@ -297,37 +296,17 @@ class _ChatPlaceholderState extends State<ChatPlaceholder> {
                   ],
                 ),
                 padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-                child: Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    Text(
-                      'KONSULTASI TEKNISI',
-                      textAlign: TextAlign.center,
-                      style: GoogleFonts.plusJakartaSans(
-                        fontWeight: FontWeight.w900,
-                        fontSize: 18,
-                        color: const Color(0xFFF4EBD0),
-                        letterSpacing: 1,
-                      ),
+                child: Center(
+                  child: Text(
+                    'KONSULTASI TEKNISI',
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.plusJakartaSans(
+                      fontWeight: FontWeight.w900,
+                      fontSize: 18,
+                      color: const Color(0xFFF4EBD0),
+                      letterSpacing: 1,
                     ),
-                    Positioned(
-                      right: 0,
-                      child: GestureDetector(
-                        onTap: () {
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (context) => const BookmarkedPostsScreen(),
-                            ),
-                          );
-                        },
-                        child: const Icon(
-                          Icons.bookmark_rounded,
-                          color: Color(0xFFF4EBD0),
-                          size: 24,
-                        ),
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
               ),
             ),

@@ -23,6 +23,7 @@ class UserChecklistScreen extends StatefulWidget {
 
 class _UserChecklistScreenState extends State<UserChecklistScreen> {
   int _activeTab = 0; // 0 = Isi Checklist, 1 = Riwayat
+  String _selectedHistoryKategori = 'Semua';
 
   @override
   void initState() {
@@ -262,7 +263,61 @@ class _UserChecklistScreenState extends State<UserChecklistScreen> {
                       final unfilledForms = provider.forms.where((f) => !filledFormIds.contains(f.id)).toList();
                       return _buildFormsList(unfilledForms);
                     } else {
-                      return _buildResultsList(provider.results);
+                      final filteredResults = _selectedHistoryKategori == 'Semua'
+                          ? provider.results
+                          : provider.results.where((r) => (r.formKategori ?? 'Harian') == _selectedHistoryKategori).toList();
+                      return Column(
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                            child: SingleChildScrollView(
+                              scrollDirection: Axis.horizontal,
+                              child: Row(
+                                children: ['Semua', 'Harian', 'Mingguan', 'Bulanan'].map((cat) {
+                                  final isSelected = _selectedHistoryKategori == cat;
+                                  return Padding(
+                                    padding: const EdgeInsets.only(right: 8),
+                                    child: InkWell(
+                                      onTap: () {
+                                        setState(() {
+                                          _selectedHistoryKategori = cat;
+                                        });
+                                      },
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                        decoration: BoxDecoration(
+                                          color: isSelected ? const Color(0xFFE5B94C) : Colors.white,
+                                          borderRadius: BorderRadius.circular(12),
+                                          border: Border.all(color: const Color(0xFF2C1810), width: 2),
+                                          boxShadow: isSelected
+                                              ? null
+                                              : const [
+                                                  BoxShadow(
+                                                    color: Color(0xFF2C1810),
+                                                    offset: Offset(2, 2),
+                                                  ),
+                                                ],
+                                        ),
+                                        child: Text(
+                                          cat.toUpperCase(),
+                                          style: GoogleFonts.plusJakartaSans(
+                                            fontWeight: FontWeight.w900,
+                                            fontSize: 10,
+                                            color: const Color(0xFF2C1810),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  );
+                                }).toList(),
+                              ),
+                            ),
+                          ),
+                          Expanded(
+                            child: _buildResultsList(filteredResults),
+                          ),
+                        ],
+                      );
                     }
                   },
                 ),
@@ -311,7 +366,7 @@ class _UserChecklistScreenState extends State<UserChecklistScreen> {
                   ),
                 ),
                 child: Text(
-                  'CHECKLIST MINGGUAN',
+                  'CHECKLIST ${form.kategori.toUpperCase()}',
                   style: GoogleFonts.plusJakartaSans(
                     color: const Color(0xFFF4EBD0),
                     fontSize: 10,
@@ -443,7 +498,7 @@ class _UserChecklistScreenState extends State<UserChecklistScreen> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      hasFeedback ? 'FEEDBACK TERSEDIA' : 'SELESAI',
+                      '${(result.formKategori ?? 'Harian').toUpperCase()} • ${hasFeedback ? 'FEEDBACK TERSEDIA' : 'SELESAI'}',
                       style: GoogleFonts.plusJakartaSans(
                         color: hasFeedback ? const Color(0xFF2C1810) : const Color(0xFFF4EBD0),
                         fontSize: 10,
@@ -1037,17 +1092,40 @@ class _FillChecklistScreenState extends State<FillChecklistScreen> {
                           onPressed: () => Navigator.of(context).pop(),
                         ),
                         Expanded(
-                          child: Text(
-                            (widget.result != null
-                                ? 'EDIT: ${widget.form.judul}'
-                                : widget.form.judul).toUpperCase(),
-                            textAlign: TextAlign.center,
-                            style: GoogleFonts.plusJakartaSans(
-                              fontWeight: FontWeight.w900,
-                              fontSize: 16,
-                              color: Colors.white,
-                              letterSpacing: 0.5,
-                            ),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                (widget.result != null
+                                    ? 'EDIT: ${widget.form.judul}'
+                                    : widget.form.judul).toUpperCase(),
+                                textAlign: TextAlign.center,
+                                style: GoogleFonts.plusJakartaSans(
+                                  fontWeight: FontWeight.w900,
+                                  fontSize: 16,
+                                  color: Colors.white,
+                                  letterSpacing: 0.5,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFE5B94C),
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(color: const Color(0xFF2C1810), width: 1.5),
+                                ),
+                                child: Text(
+                                  'KATEGORI: ${widget.form.kategori.toUpperCase()}',
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontWeight: FontWeight.w900,
+                                    fontSize: 9,
+                                    color: const Color(0xFF2C1810),
+                                    letterSpacing: 0.5,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                         const SizedBox(width: 48), // Spacer to balance back button

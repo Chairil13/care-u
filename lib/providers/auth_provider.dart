@@ -203,21 +203,9 @@ class AuthProvider extends ChangeNotifier {
     try {
       final currentUserId = _supabase.auth.currentUser?.id;
       if (currentUserId != null) {
-        try {
-          // Hapus FCM token dari database Supabase sebelum logout (agar RLS masih mengizinkan update)
-          await _supabase
-              .from('users')
-              .update({'fcm_token': null})
-              .eq('id', currentUserId);
-          
-          // Hapus token lokal dari Firebase
-          if (!kIsWeb && (Platform.isAndroid || Platform.isIOS)) {
-            await FirebaseMessaging.instance.deleteToken();
-          }
-          debugPrint('FCM Token cleared successfully during logout');
-        } catch (e) {
-          debugPrint('Error clearing FCM Token during logout: $e');
-        }
+        _clearFcmTokenBackground(currentUserId).catchError((e) {
+          debugPrint('FCM token cleanup background error: $e');
+        });
       }
 
       await _supabase.auth.signOut();
@@ -228,6 +216,29 @@ class AuthProvider extends ChangeNotifier {
       _setLoading(false);
     }
   }
+
+  Future<void> _clearFcmTokenBackground(String userId) async {
+    try {
+      await _supabase
+          .from('users')
+          .update({'fcm_token': null})
+          .eq('id', userId)
+          .timeout(const Duration(seconds: 2));
+      debugPrint('FCM Token in DB cleared successfully during logout');
+    } catch (e) {
+      debugPrint('Error clearing FCM Token in DB during logout: $e');
+    }
+
+    try {
+      if (!kIsWeb && (Platform.isAndroid || Platform.isIOS)) {
+        await FirebaseMessaging.instance.deleteToken().timeout(const Duration(seconds: 2));
+      }
+      debugPrint('Firebase FCM Token deleted successfully during logout');
+    } catch (e) {
+      debugPrint('Error deleting Firebase FCM Token during logout: $e');
+    }
+  }
+
 
   void clearError() {
     _errorMessage = null;
@@ -256,6 +267,15 @@ class AuthProvider extends ChangeNotifier {
       return 'Password minimal 6 karakter.';
     } else if (lowerMessage.contains('unable to validate email address')) {
       return 'Format email tidak valid.';
+    } else if (lowerMessage.contains('invalid token') ||
+        lowerMessage.contains('invalid otp') ||
+        lowerMessage.contains('token is invalid') ||
+        lowerMessage.contains('otp is invalid')) {
+      return 'Kode reset tidak valid atau salah.';
+    } else if (lowerMessage.contains('expired') ||
+        lowerMessage.contains('token expired') ||
+        lowerMessage.contains('otp expired')) {
+      return 'Kode reset sudah kedaluwarsa.';
     }
     return message;
   }
@@ -342,6 +362,54 @@ class AuthProvider extends ChangeNotifier {
       return false;
     } catch (e) {
       _errorMessage = 'Terjadi kesalahan saat update password.';
+      return false;
+    } finally {
+      _setLoading(false);
+    }
+  }
+
+  /// Reset Password (Lupa Password)
+  Future<bool> resetPassword({required String email}) async {
+    _setLoading(true);
+    _errorMessage = null;
+
+    try {
+      await _supabase.auth.resetPasswordForEmail(
+        email,
+        redirectTo: 'io.supabase.careu://reset-callback/',
+      );
+      return true;
+    } on AuthException catch (e) {
+      _errorMessage = _parseAuthError(e.message);
+      return false;
+    } catch (e) {
+      _errorMessage = 'Terjadi kesalahan saat mengirim email reset password.';
+      return false;
+    } finally {
+      _setLoading(false);
+    }
+  }
+
+  /// Verifikasi kode OTP reset password
+  Future<bool> verifyResetCode({
+    required String email,
+    required String token,
+  }) async {
+    _setLoading(true);
+    _errorMessage = null;
+
+    try {
+      await _supabase.auth.verifyOTP(
+        email: email,
+        token: token,
+        type: OtpType.recovery,
+      );
+      return true;
+    } on AuthException catch (e) {
+      _errorMessage = _parseAuthError(e.message);
+      return false;
+    } catch (e) {
+      _errorMessage = 'Terjadi kesalahan saat memverifikasi kode reset.';
       return false;
     } finally {
       _setLoading(false);

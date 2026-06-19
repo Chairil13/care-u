@@ -3,8 +3,9 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 import '../user/user_main_screen.dart';
-import '../teknisi/teknisi_home_screen.dart';
+import '../teknisi/teknisi_main_screen.dart';
 import 'register_screen.dart';
+import 'forgot_password_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -46,18 +47,6 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
     super.dispose();
   }
 
-  void _showSnackbar(String message, {bool isError = false}) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message, style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700)),
-        backgroundColor: isError ? const Color(0xFFD32F2F) : const Color(0xFF2E7D32),
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        margin: const EdgeInsets.all(16),
-      ),
-    );
-  }
-
   Future<void> _handleLogin() async {
     setState(() => _loginError = null);
     if (!_formKey.currentState!.validate()) return;
@@ -73,7 +62,7 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
     if (success) {
       final user = authProvider.currentUser;
       final destination = user?.role == 'teknisi' 
-        ? const TeknisiHomeScreen() 
+        ? const TeknisiMainScreen() 
         : const UserMainScreen();
       
       Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (_) => destination));
@@ -86,7 +75,6 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
           _loginError = 'Email atau password salah.';
         }
       });
-      _showSnackbar(_loginError!, isError: true);
     }
   }
 
@@ -134,7 +122,7 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
                                       border: Border.all(color: const Color(0xFF2C1810), width: 4),
                                       boxShadow: const [BoxShadow(color: Color(0xFF2C1810), offset: Offset(6, 6))],
                                     ),
-                                    child: const Icon(Icons.motorcycle_rounded, color: Color(0xFFF4EBD0), size: 50),
+                                    child: Image.asset('assets/careu.png', width: 80, height: 80, fit: BoxFit.contain),
                                   ),
                                   const SizedBox(height: 24),
                                   Text('CARE-U', style: GoogleFonts.plusJakartaSans(fontSize: 48, fontWeight: FontWeight.w900, color: const Color(0xFF2C1810), letterSpacing: 2)),
@@ -243,7 +231,15 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
                 ),
               ),
             ],
-            const SizedBox(height: 32),
+            const SizedBox(height: 16),
+            Align(
+              alignment: Alignment.centerRight,
+              child: GestureDetector(
+                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ForgotPasswordScreen())),
+                child: Text('LUPA PASSWORD?', style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.w900, color: const Color(0xFFD9614C), decoration: TextDecoration.underline, decorationColor: const Color(0xFFD9614C))),
+              ),
+            ),
+            const SizedBox(height: 24),
             Consumer<AuthProvider>(
               builder: (context, auth, _) {
                 return SizedBox(

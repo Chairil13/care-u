@@ -276,6 +276,7 @@ class ChecklistProvider extends ChangeNotifier {
   Future<bool> createForm({
     required String judul,
     required String deskripsi,
+    required String kategori,
     required List<String> itemNames,
   }) async {
     final user = _supabase.auth.currentUser;
@@ -290,6 +291,7 @@ class ChecklistProvider extends ChangeNotifier {
             'teknisi_id': user.id,
             'judul': judul,
             'deskripsi': deskripsi,
+            'kategori': kategori,
           })
           .select()
           .single();
@@ -340,6 +342,7 @@ class ChecklistProvider extends ChangeNotifier {
     required String formId,
     required String judul,
     required String deskripsi,
+    required String kategori,
     required List<String> itemNames,
   }) async {
     _setLoading(true);
@@ -350,6 +353,7 @@ class ChecklistProvider extends ChangeNotifier {
           .update({
             'judul': judul,
             'deskripsi': deskripsi,
+            'kategori': kategori,
           })
           .eq('id', formId);
 

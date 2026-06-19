@@ -10,6 +10,7 @@ class StoryProvider extends ChangeNotifier {
   final SupabaseClient _supabase = Supabase.instance.client;
   List<StoryModel> _stories = [];
   List<StoryModel> _posts = [];
+  List<StoryModel> _reels = [];
   List<String> _viewedStoryIds = [];
   bool _isLoading = false;
   bool _isUploading = false;
@@ -32,6 +33,7 @@ class StoryProvider extends ChangeNotifier {
 
   List<StoryModel> get stories => _stories;
   List<StoryModel> get posts => _posts;
+  List<StoryModel> get reels => _reels;
   List<String> get viewedStoryIds => _viewedStoryIds;
   bool get isLoading => _isLoading;
   bool get isUploading => _isUploading;
@@ -56,6 +58,7 @@ class StoryProvider extends ChangeNotifier {
   void clearData() {
     _stories = [];
     _posts = [];
+    _reels = [];
     _viewedStoryIds = [];
     _likeCounts.clear();
     _likedByMe.clear();
@@ -83,8 +86,8 @@ class StoryProvider extends ChangeNotifier {
           .map((json) => StoryModel.fromJson(json))
           .toList();
 
-      // Filter out posts from the stories list
-      _stories = allStories.where((story) => !story.isPost).toList();
+      // Filter out posts and reels from the stories list
+      _stories = allStories.where((story) => !story.isPost && !story.isReel).toList();
 
       final user = _supabase.auth.currentUser;
       if (user != null) {
@@ -121,8 +124,10 @@ class StoryProvider extends ChangeNotifier {
           .map((json) => StoryModel.fromJson(json))
           .toList();
 
-      // Only include posts
-      _posts = allRecords.where((story) => story.isPost).toList();
+      // Only include posts (exclude reels)
+      _posts = allRecords.where((story) => story.isPost && !story.isReel).toList();
+      // Only include reels
+      _reels = allRecords.where((story) => story.isReel).toList();
 
       // Fetch like and comment counts for all posts
       await _fetchPostEngagementData();
@@ -137,7 +142,10 @@ class StoryProvider extends ChangeNotifier {
 
   Future<void> _fetchPostEngagementData() async {
     final user = _supabase.auth.currentUser;
-    final postIds = _posts.map((p) => p.id).toList();
+    final postIds = [
+      ..._posts.map((p) => p.id),
+      ..._reels.map((r) => r.id),
+    ];
     if (postIds.isEmpty) return;
 
     try {
@@ -399,6 +407,21 @@ class StoryProvider extends ChangeNotifier {
           createdAt: old.createdAt,
           userName: old.userName,
           userAvatarUrl: old.userAvatarUrl,
+          userRole: old.userRole,
+        );
+      }
+      final reelIndex = _reels.indexWhere((r) => r.id == storyId);
+      if (reelIndex != -1) {
+        final old = _reels[reelIndex];
+        _reels[reelIndex] = StoryModel(
+          id: old.id,
+          userId: old.userId,
+          mediaUrl: old.mediaUrl,
+          caption: newCaption,
+          createdAt: old.createdAt,
+          userName: old.userName,
+          userAvatarUrl: old.userAvatarUrl,
+          userRole: old.userRole,
         );
       }
       notifyListeners();
@@ -530,6 +553,58 @@ class StoryProvider extends ChangeNotifier {
     } catch (e) {
       _errorMessage = 'Gagal mengunggah post: $e';
       debugPrint('Error uploading post: $e');
+      return false;
+    } finally {
+      _isUploading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<bool> uploadReel({
+    required Uint8List videoBytes,
+    required String fileName,
+    required String caption,
+  }) async {
+    final user = _supabase.auth.currentUser;
+    if (user == null) {
+      _errorMessage = 'User belum login';
+      notifyListeners();
+      return false;
+    }
+
+    _isUploading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      // 1. Upload to Supabase Storage in 'avatars' bucket, path: userId/reels/timestamp_filename
+      final cleanFileName = fileName.replaceAll(RegExp(r'[^a-zA-Z0-9.]'), '_');
+      final path = '${user.id}/reels/${DateTime.now().millisecondsSinceEpoch}_$cleanFileName';
+
+      await _supabase.storage.from('avatars').uploadBinary(
+        path,
+        videoBytes,
+        fileOptions: const FileOptions(
+          contentType: 'video/mp4',
+          upsert: true,
+        ),
+      );
+
+      final mediaUrl = _supabase.storage.from('avatars').getPublicUrl(path);
+
+      // 2. Insert into public.stories table
+      await _supabase.from('stories').insert({
+        'user_id': user.id,
+        'media_url': mediaUrl,
+        'caption': caption,
+      });
+
+      // Fetch immediately to update UI faster
+      await fetchPosts();
+      return true;
+    } catch (e) {
+      _errorMessage = 'Gagal mengunggah reel: $e';
+      debugPrint('Error uploading reel: $e');
       return false;
     } finally {
       _isUploading = false;
