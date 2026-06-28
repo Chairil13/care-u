@@ -226,21 +226,82 @@ class ChatProvider extends ChangeNotifier {
     }
   }
 
-  /// Fetch all users with role 'user'
+  /// Fetch all users with role 'user', sorted by most recent message
   Future<void> fetchUsers() async {
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
     try {
-      final response = await _supabase
+      final myId = _supabase.auth.currentUser?.id;
+
+      // 1. Ambil semua user
+      final usersResponse = await _supabase
           .from('users')
           .select()
-          .eq('role', 'user')
-          .order('name', ascending: true);
+          .eq('role', 'user');
 
-      _users = (response as List)
+      final List<UserModel> allUsers = (usersResponse as List)
           .map((json) => UserModel.fromJson(json))
           .toList();
+
+      if (myId == null) {
+        _users = allUsers;
+        _users.sort((a, b) => a.name.compareTo(b.name));
+      } else {
+        // 2. Ambil pesan terakhir untuk setiap user (sent ke/dari teknisi ini)
+        final messagesResponse = await _supabase
+            .from('messages')
+            .select('sender_id, receiver_id, created_at')
+            .or('sender_id.eq.$myId,receiver_id.eq.$myId')
+            .order('created_at', ascending: false);
+
+        // Buat map: userId -> lastMessageAt
+        final Map<String, DateTime> lastMessageMap = {};
+        for (final msg in messagesResponse as List) {
+          final senderId = msg['sender_id'] as String;
+          final receiverId = msg['receiver_id'] as String;
+          final createdAt = DateTime.parse(msg['created_at'] as String);
+
+          // Tentukan userId (pihak lain, bukan teknisi)
+          final partnerId = senderId == myId ? receiverId : senderId;
+
+          // Hanya simpan yang pertama ditemukan (sudah sorted desc = terbaru)
+          if (!lastMessageMap.containsKey(partnerId)) {
+            lastMessageMap[partnerId] = createdAt;
+          }
+        }
+
+        // 3. Assign lastMessageAt ke setiap user & sort
+        _users = allUsers.map((user) {
+          if (lastMessageMap.containsKey(user.id)) {
+            return UserModel(
+              id: user.id,
+              name: user.name,
+              email: user.email,
+              role: user.role,
+              phone: user.phone,
+              avatarUrl: user.avatarUrl,
+              createdAt: user.createdAt,
+              lastMessageAt: lastMessageMap[user.id],
+            );
+          }
+          return user;
+        }).toList();
+
+        // Sort: yang punya pesan terbaru duluan, yang tidak punya pesan di bawah (by name)
+        _users.sort((a, b) {
+          final aTime = a.lastMessageAt;
+          final bTime = b.lastMessageAt;
+          if (aTime != null && bTime != null) {
+            return bTime.compareTo(aTime); // descending (terbaru di atas)
+          } else if (aTime != null) {
+            return -1; // a punya pesan, a duluan
+          } else if (bTime != null) {
+            return 1; // b punya pesan, b duluan
+          }
+          return a.name.compareTo(b.name); // keduanya tidak punya pesan, sort by name
+        });
+      }
     } catch (e) {
       _errorMessage = 'Gagal memuat daftar user: $e';
       debugPrint('ChatProvider fetchUsers error: $e');
@@ -386,6 +447,39 @@ class ChatProvider extends ChangeNotifier {
       return false;
     }
   }
+
+  /// Send a location message
+  Future<bool> sendLocationMessage(
+    String receiverId,
+    double latitude,
+    double longitude,
+    String locationName,
+  ) async {
+    final myId = _supabase.auth.currentUser?.id;
+    if (myId == null) {
+      _errorMessage = 'Sesi telah berakhir. Silakan login kembali.';
+      notifyListeners();
+      return false;
+    }
+
+    try {
+      await _supabase.from('messages').insert({
+        'sender_id': myId,
+        'receiver_id': receiverId,
+        'message': locationName,
+        'message_type': 'location',
+        'latitude': latitude,
+        'longitude': longitude,
+        'location_name': locationName,
+      });
+      return true;
+    } catch (e) {
+      _errorMessage = 'Gagal mengirim lokasi: $e';
+      debugPrint('ChatProvider sendLocationMessage error: $e');
+      notifyListeners();
+      return false;
+    }
+  }
 }
 
 class InAppNotificationWidget extends StatefulWidget {
@@ -450,9 +544,12 @@ class _InAppNotificationWidgetState extends State<InAppNotificationWidget> with 
   @override
   Widget build(BuildContext context) {
     final hasImage = widget.imageUrl != null;
-    final displayMessage = hasImage 
-        ? (widget.message.isNotEmpty ? '📷 ${widget.message}' : '📷 Mengirim gambar')
-        : widget.message;
+    final isLocation = widget.message.startsWith('__location__');
+    final displayMessage = isLocation
+        ? '📍 Mengirim lokasi'
+        : hasImage 
+            ? (widget.message.isNotEmpty ? '📷 ${widget.message}' : '📷 Mengirim gambar')
+            : widget.message;
 
     return SafeArea(
       child: Align(

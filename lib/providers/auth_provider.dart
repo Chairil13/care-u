@@ -45,8 +45,11 @@ class AuthProvider extends ChangeNotifier {
 
   Future<void> _fetchUserProfile(String userId) async {
     try {
-      final response =
-          await _supabase.from('users').select().eq('id', userId).maybeSingle();
+      final response = await _supabase
+          .from('users')
+          .select()
+          .eq('id', userId)
+          .maybeSingle();
 
       if (response != null) {
         _currentUser = UserModel.fromJson(response);
@@ -64,14 +67,17 @@ class AuthProvider extends ChangeNotifier {
           );
 
           // Try to sync to public.users in the background
-          _supabase.from('users').upsert({
-            'id': _currentUser!.id,
-            'name': _currentUser!.name,
-            'email': _currentUser!.email,
-            'role': _currentUser!.role,
-            'phone': _currentUser!.phone,
-            'avatar_url': _currentUser!.avatarUrl,
-          }).then((_) => debugPrint('Profile synced to public.users'));
+          _supabase
+              .from('users')
+              .upsert({
+                'id': _currentUser!.id,
+                'name': _currentUser!.name,
+                'email': _currentUser!.email,
+                'role': _currentUser!.role,
+                'phone': _currentUser!.phone,
+                'avatar_url': _currentUser!.avatarUrl,
+              })
+              .then((_) => debugPrint('Profile synced to public.users'));
         }
       }
       notifyListeners();
@@ -161,6 +167,8 @@ class AuthProvider extends ChangeNotifier {
   Future<bool> signIn({required String email, required String password}) async {
     _setLoading(true);
     _errorMessage = null;
+    _currentUser = null;
+    notifyListeners();
 
     try {
       final authResponse = await _supabase.auth.signInWithPassword(
@@ -231,14 +239,15 @@ class AuthProvider extends ChangeNotifier {
 
     try {
       if (!kIsWeb && (Platform.isAndroid || Platform.isIOS)) {
-        await FirebaseMessaging.instance.deleteToken().timeout(const Duration(seconds: 2));
+        await FirebaseMessaging.instance.deleteToken().timeout(
+          const Duration(seconds: 2),
+        );
       }
       debugPrint('Firebase FCM Token deleted successfully during logout');
     } catch (e) {
       debugPrint('Error deleting Firebase FCM Token during logout: $e');
     }
   }
-
 
   void clearError() {
     _errorMessage = null;
@@ -430,19 +439,24 @@ class AuthProvider extends ChangeNotifier {
       final filePath = '$userId/$fileName';
 
       // 1. Upload to Supabase Storage
-      await _supabase.storage.from('avatars').upload(
+      await _supabase.storage
+          .from('avatars')
+          .upload(
             filePath,
             imageFile,
             fileOptions: const FileOptions(upsert: true),
           );
 
       // 2. Get Public URL
-      final avatarUrl = _supabase.storage.from('avatars').getPublicUrl(filePath);
+      final avatarUrl = _supabase.storage
+          .from('avatars')
+          .getPublicUrl(filePath);
 
       // 3. Update public.users table
-      await _supabase.from('users').update({
-        'avatar_url': avatarUrl,
-      }).eq('id', userId);
+      await _supabase
+          .from('users')
+          .update({'avatar_url': avatarUrl})
+          .eq('id', userId);
 
       // 4. Refresh Profile
       await _fetchUserProfile(userId);

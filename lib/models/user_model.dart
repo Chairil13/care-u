@@ -6,6 +6,7 @@ class UserModel {
   final String? phone;
   final String? avatarUrl;
   final DateTime? createdAt;
+  final DateTime? lastMessageAt; // untuk sorting daftar chat
 
   UserModel({
     required this.id,
@@ -15,6 +16,7 @@ class UserModel {
     this.phone,
     this.avatarUrl,
     this.createdAt,
+    this.lastMessageAt,
   });
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
@@ -27,6 +29,9 @@ class UserModel {
       avatarUrl: json['avatar_url'] as String?,
       createdAt: json['created_at'] != null
           ? DateTime.parse(json['created_at'] as String)
+          : null,
+      lastMessageAt: json['last_message_at'] != null
+          ? DateTime.parse(json['last_message_at'] as String)
           : null,
     );
   }

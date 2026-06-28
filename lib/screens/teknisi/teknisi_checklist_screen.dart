@@ -631,10 +631,12 @@ class _TeknisiChecklistScreenState extends State<TeknisiChecklistScreen> {
                             detail['status'] as String? ?? 'Baik';
 
                         Color statusColor = const Color(0xFF5AB974);
-                        if (status == 'Perlu Servis')
+                        if (status == 'Perlu Servis') {
                           statusColor = const Color(0xFFE5B94C);
-                        if (status == 'Kritis')
+                        }
+                        if (status == 'Kritis') {
                           statusColor = const Color(0xFFD9614C);
+                        }
 
                         return Container(
                           padding: const EdgeInsets.symmetric(
@@ -1518,10 +1520,12 @@ class _EvaluateChecklistScreenState extends State<EvaluateChecklistScreen> {
                           final catatan = detail['catatan'] as String? ?? '';
 
                           Color badgeColor = const Color(0xFF5AB974);
-                          if (status == 'Perlu Servis')
+                          if (status == 'Perlu Servis') {
                             badgeColor = const Color(0xFFE5B94C);
-                          if (status == 'Kritis')
+                          }
+                          if (status == 'Kritis') {
                             badgeColor = const Color(0xFFD9614C);
+                          }
 
                           return Container(
                             margin: const EdgeInsets.only(bottom: 16),

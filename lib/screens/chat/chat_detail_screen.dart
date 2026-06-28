@@ -4,6 +4,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../models/user_model.dart';
 import '../../models/message_model.dart';
 import '../../providers/chat_provider.dart';
@@ -89,22 +91,188 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
 
   Future<void> _handlePickImage() async {
     final picker = ImagePicker();
-    
+
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
+      isScrollControlled: true,
       builder: (context) {
-        return Container(
-          margin: const EdgeInsets.all(24),
+        return Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(context).viewInsets.bottom,
+          ),
+          child: Container(
+            margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF4EBD0),
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(color: const Color(0xFF2C1810), width: 4),
+              boxShadow: const [
+                BoxShadow(color: Color(0xFF2C1810), offset: Offset(6, 6)),
+              ],
+            ),
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 40,
+                  height: 5,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF2C1810),
+                    borderRadius: BorderRadius.circular(3),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'PILIH LAMPIRAN',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontWeight: FontWeight.w900,
+                    fontSize: 15,
+                    color: const Color(0xFF2C1810),
+                    letterSpacing: 1,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                // Kamera Button
+                InkWell(
+                  onTap: () async {
+                    Navigator.of(context).pop();
+                    final pickedFile = await picker.pickImage(
+                      source: ImageSource.camera,
+                      imageQuality: 70,
+                    );
+                    if (pickedFile != null && mounted) {
+                      _showImagePreviewAndCaptionDialog(pickedFile);
+                    }
+                  },
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFE5B94C),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: const Color(0xFF2C1810), width: 3),
+                      boxShadow: const [
+                        BoxShadow(color: Color(0xFF2C1810), offset: Offset(4, 4)),
+                      ],
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(Icons.camera_alt_rounded, color: Color(0xFF2C1810), size: 20),
+                        const SizedBox(width: 8),
+                        Text(
+                          'AMBIL FOTO (KAMERA)',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontWeight: FontWeight.w900,
+                            color: const Color(0xFF2C1810),
+                            fontSize: 13,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                // Galeri Button
+                InkWell(
+                  onTap: () async {
+                    Navigator.of(context).pop();
+                    final pickedFile = await picker.pickImage(
+                      source: ImageSource.gallery,
+                      imageQuality: 70,
+                    );
+                    if (pickedFile != null && mounted) {
+                      _showImagePreviewAndCaptionDialog(pickedFile);
+                    }
+                  },
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF4A90D9),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: const Color(0xFF2C1810), width: 3),
+                      boxShadow: const [
+                        BoxShadow(color: Color(0xFF2C1810), offset: Offset(4, 4)),
+                      ],
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(Icons.photo_library_rounded, color: Colors.white, size: 20),
+                        const SizedBox(width: 8),
+                        Text(
+                          'PILIH DARI GALERI',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontWeight: FontWeight.w900,
+                            color: Colors.white,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                // Bagikan Lokasi Button
+                InkWell(
+                  onTap: () {
+                    Navigator.of(context).pop();
+                    _handleShareLocation();
+                  },
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF4CAF50),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: const Color(0xFF2C1810), width: 3),
+                      boxShadow: const [
+                        BoxShadow(color: Color(0xFF2C1810), offset: Offset(4, 4)),
+                      ],
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(Icons.location_on_rounded, color: Colors.white, size: 20),
+                        const SizedBox(width: 8),
+                        Text(
+                          'BAGIKAN LOKASI',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontWeight: FontWeight.w900,
+                            color: Colors.white,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+
+  Future<void> _handleShareLocation() async {
+    // Show confirmation dialog
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => Dialog(
+        backgroundColor: Colors.transparent,
+        child: Container(
           decoration: BoxDecoration(
-            color: const Color(0xFFF4EBD0), // Vintage paper
+            color: const Color(0xFFF4EBD0),
             borderRadius: BorderRadius.circular(24),
             border: Border.all(color: const Color(0xFF2C1810), width: 4),
             boxShadow: const [
-              BoxShadow(
-                color: Color(0xFF2C1810),
-                offset: Offset(8, 8),
-              ),
+              BoxShadow(color: Color(0xFF2C1810), offset: Offset(8, 8)),
             ],
           ),
           padding: const EdgeInsets.all(24),
@@ -112,120 +280,230 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Container(
-                width: 40,
-                height: 6,
+                padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF2C1810),
-                  borderRadius: BorderRadius.circular(3),
+                  color: const Color(0xFF4CAF50),
+                  shape: BoxShape.circle,
+                  border: Border.all(color: const Color(0xFF2C1810), width: 3),
+                  boxShadow: const [
+                    BoxShadow(color: Color(0xFF2C1810), offset: Offset(4, 4)),
+                  ],
                 ),
+                child: const Icon(Icons.location_on_rounded, color: Colors.white, size: 36),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 20),
               Text(
-                'PILIH SUMBER GAMBAR',
+                'BAGIKAN LOKASI',
                 style: GoogleFonts.plusJakartaSans(
                   fontWeight: FontWeight.w900,
-                  fontSize: 16,
+                  fontSize: 18,
                   color: const Color(0xFF2C1810),
                   letterSpacing: 1,
                 ),
               ),
-              const SizedBox(height: 24),
-              // Kamera Button
-              InkWell(
-                onTap: () async {
-                  Navigator.of(context).pop();
-                  final pickedFile = await picker.pickImage(
-                    source: ImageSource.camera,
-                    imageQuality: 70,
-                  );
-                  if (pickedFile != null && mounted) {
-                    _showImagePreviewAndCaptionDialog(pickedFile);
-                  }
-                },
-                child: Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFE5B94C), // Yellow
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: const Color(0xFF2C1810), width: 3),
-                    boxShadow: const [
-                      BoxShadow(
-                        color: Color(0xFF2C1810),
-                        offset: Offset(4, 4),
-                      ),
-                    ],
-                  ),
-                  child: Center(
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(Icons.camera_alt_rounded, color: Color(0xFF2C1810)),
-                        const SizedBox(width: 8),
-                        Text(
-                          'AMBIL FOTO (KAMERA)',
-                          style: GoogleFonts.plusJakartaSans(
-                            fontWeight: FontWeight.w900,
-                            color: const Color(0xFF2C1810),
-                            fontSize: 14,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+              const SizedBox(height: 12),
+              Text(
+                'Bagikan lokasi kamu saat ini ke ${widget.partner.name}?',
+                textAlign: TextAlign.center,
+                style: GoogleFonts.plusJakartaSans(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 14,
+                  color: const Color(0xFF2C1810).withValues(alpha: 0.8),
                 ),
               ),
-              const SizedBox(height: 20),
-              // Galeri Button
-              InkWell(
-                onTap: () async {
-                  Navigator.of(context).pop();
-                  final pickedFile = await picker.pickImage(
-                    source: ImageSource.gallery,
-                    imageQuality: 70,
-                  );
-                  if (pickedFile != null && mounted) {
-                    _showImagePreviewAndCaptionDialog(pickedFile);
-                  }
-                },
-                child: Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF4A90D9), // Blue
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: const Color(0xFF2C1810), width: 3),
-                    boxShadow: const [
-                      BoxShadow(
-                        color: Color(0xFF2C1810),
-                        offset: Offset(4, 4),
-                      ),
-                    ],
-                  ),
-                  child: Center(
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(Icons.photo_library_rounded, color: Colors.white),
-                        const SizedBox(width: 8),
-                        Text(
-                          'PILIH DARI GALERI',
-                          style: GoogleFonts.plusJakartaSans(
-                            fontWeight: FontWeight.w900,
-                            color: Colors.white,
-                            fontSize: 14,
+              const SizedBox(height: 24),
+              Row(
+                children: [
+                  Expanded(
+                    child: InkWell(
+                      onTap: () => Navigator.of(context).pop(false),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: const Color(0xFF2C1810), width: 3),
+                          boxShadow: const [
+                            BoxShadow(color: Color(0xFF2C1810), offset: Offset(4, 4)),
+                          ],
+                        ),
+                        child: Center(
+                          child: Text(
+                            'BATAL',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontWeight: FontWeight.w900,
+                              color: const Color(0xFF2C1810),
+                              fontSize: 14,
+                            ),
                           ),
                         ),
-                      ],
+                      ),
                     ),
                   ),
-                ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: InkWell(
+                      onTap: () => Navigator.of(context).pop(true),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF4CAF50),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: const Color(0xFF2C1810), width: 3),
+                          boxShadow: const [
+                            BoxShadow(color: Color(0xFF2C1810), offset: Offset(4, 4)),
+                          ],
+                        ),
+                        child: Center(
+                          child: Text(
+                            'BAGIKAN',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontWeight: FontWeight.w900,
+                              color: Colors.white,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
-        );
-      },
+        ),
+      ),
     );
+
+    if (confirmed != true || !mounted) return;
+
+    // Check & request location permission
+    LocationPermission permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+    }
+
+    if (!mounted) return;
+
+    if (permission == LocationPermission.denied ||
+        permission == LocationPermission.deniedForever) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Izin lokasi diperlukan untuk berbagi lokasi.',
+            style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700),
+          ),
+          backgroundColor: const Color(0xFFD32F2F),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          action: permission == LocationPermission.deniedForever
+              ? SnackBarAction(
+                  label: 'PENGATURAN',
+                  textColor: Colors.white,
+                  onPressed: () => Geolocator.openAppSettings(),
+                )
+              : null,
+        ),
+      );
+      return;
+    }
+
+    // Show loading
+    if (!mounted) return;
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => PopScope(
+        canPop: false,
+        child: Dialog(
+          backgroundColor: Colors.transparent,
+          child: Container(
+            decoration: BoxDecoration(
+              color: const Color(0xFFF4EBD0),
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(color: const Color(0xFF2C1810), width: 4),
+              boxShadow: const [
+                BoxShadow(color: Color(0xFF2C1810), offset: Offset(8, 8)),
+              ],
+            ),
+            padding: const EdgeInsets.all(32),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const CircularProgressIndicator(
+                  valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF4CAF50)),
+                  strokeWidth: 4,
+                ),
+                const SizedBox(height: 24),
+                Text(
+                  'MENGAMBIL LOKASI...',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontWeight: FontWeight.w900,
+                    fontSize: 15,
+                    color: const Color(0xFF2C1810),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+
+    try {
+      final position = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.high,
+          timeLimit: Duration(seconds: 15),
+        ),
+      );
+
+      if (!mounted) return;
+      Navigator.of(context).pop(); // close loading
+
+      final lat = position.latitude;
+      final lng = position.longitude;
+      final locationName = '${lat.toStringAsFixed(6)}, ${lng.toStringAsFixed(6)}';
+
+      final success = await context.read<ChatProvider>().sendLocationMessage(
+            widget.partner.id,
+            lat,
+            lng,
+            locationName,
+          );
+
+      if (!mounted) return;
+      if (success) {
+        Future.delayed(const Duration(milliseconds: 100), _scrollToBottom);
+      } else {
+        final error = context.read<ChatProvider>().errorMessage ?? 'Gagal mengirim lokasi';
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              error,
+              style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700),
+            ),
+            backgroundColor: const Color(0xFFD32F2F),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          ),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      try { Navigator.of(context).pop(); } catch (_) {}
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Gagal mendapatkan lokasi: $e',
+            style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700),
+          ),
+          backgroundColor: const Color(0xFFD32F2F),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        ),
+      );
+    }
   }
 
   Future<void> _processPickedImage(XFile pickedFile, String caption) async {
@@ -1349,6 +1627,9 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                               textColor: isMe && !isPartnerTeknisi ? Colors.white : const Color(0xFF2C1810),
                               imageUrl: msg.imageUrl,
                               onLongPress: isMe ? () => _showMessageActions(context, msg) : null,
+                              isLocation: msg.isLocation,
+                              latitude: msg.latitude,
+                              longitude: msg.longitude,
                             ),
                           ),
                         );
@@ -1374,7 +1655,22 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
     required Color textColor,
     String? imageUrl,
     VoidCallback? onLongPress,
+    bool isLocation = false,
+    double? latitude,
+    double? longitude,
   }) {
+    // If location message, render location bubble instead
+    if (isLocation && latitude != null && longitude != null) {
+      return _buildLocationBubble(
+        latitude: latitude,
+        longitude: longitude,
+        isMe: isMe,
+        time: time,
+        bubbleColor: bubbleColor,
+        textColor: textColor,
+        onLongPress: onLongPress,
+      );
+    }
     return Align(
       alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
       child: Column(
@@ -1493,6 +1789,217 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
     );
   }
 
+  Widget _buildLocationBubble({
+    required double latitude,
+    required double longitude,
+    required bool isMe,
+    required String time,
+    required Color bubbleColor,
+    required Color textColor,
+    VoidCallback? onLongPress,
+  }) {
+    final mapsUrl = 'https://www.google.com/maps/search/?api=1&query=$latitude,$longitude';
+    final latStr = latitude.toStringAsFixed(5);
+    final lngStr = longitude.toStringAsFixed(5);
+
+    return Align(
+      alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
+      child: Column(
+        crossAxisAlignment: isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+        children: [
+          GestureDetector(
+            onTap: () => _openLocationInMaps(mapsUrl),
+            onLongPress: onLongPress,
+            child: Container(
+              constraints: const BoxConstraints(maxWidth: 260),
+              decoration: BoxDecoration(
+                color: bubbleColor,
+                borderRadius: BorderRadius.only(
+                  topLeft: const Radius.circular(20),
+                  topRight: const Radius.circular(20),
+                  bottomLeft: Radius.circular(isMe ? 20 : 0),
+                  bottomRight: Radius.circular(isMe ? 0 : 20),
+                ),
+                border: Border.all(color: const Color(0xFF2C1810), width: 3),
+                boxShadow: const [
+                  BoxShadow(color: Color(0xFF2C1810), offset: Offset(4, 4)),
+                ],
+              ),
+              padding: const EdgeInsets.all(4),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Map preview card
+                  Container(
+                    height: 120,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFE8F5E9),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: const Color(0xFF2C1810), width: 2),
+                    ),
+                    child: Stack(
+                      children: [
+                        // Grid lines background (map-like)
+                        CustomPaint(
+                          size: const Size.fromHeight(120),
+                          painter: _MapGridPainter(),
+                        ),
+                        // Center pin
+                        Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(10),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF4CAF50),
+                                  shape: BoxShape.circle,
+                                  border: Border.all(color: const Color(0xFF2C1810), width: 2.5),
+                                  boxShadow: const [
+                                    BoxShadow(
+                                      color: Color(0xFF2C1810),
+                                      offset: Offset(3, 3),
+                                    ),
+                                  ],
+                                ),
+                                child: const Icon(
+                                  Icons.location_on_rounded,
+                                  color: Colors.white,
+                                  size: 24,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF2C1810),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Text(
+                                  'LOKASI SAAT INI',
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 9,
+                                    fontWeight: FontWeight.w900,
+                                    color: Colors.white,
+                                    letterSpacing: 0.5,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  // Coordinates row
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 10),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.my_location_rounded, size: 14, color: Color(0xFF4CAF50)),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: Text(
+                            '$latStr, $lngStr',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w800,
+                              color: textColor,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  // Open in Maps button
+                  Container(
+                    margin: const EdgeInsets.fromLTRB(6, 0, 6, 6),
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF4CAF50),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: const Color(0xFF2C1810), width: 2),
+                      boxShadow: const [
+                        BoxShadow(color: Color(0xFF2C1810), offset: Offset(2, 2)),
+                      ],
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(Icons.map_rounded, color: Colors.white, size: 16),
+                        const SizedBox(width: 6),
+                        Text(
+                          'BUKA DI MAPS',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w900,
+                            color: Colors.white,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            child: Text(
+              time,
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 10,
+                fontWeight: FontWeight.w700,
+                color: const Color(0xFF2C1810).withValues(alpha: 0.5),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _openLocationInMaps(String mapsUrl) async {
+    final uri = Uri.parse(mapsUrl);
+    try {
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+      } else {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Tidak dapat membuka Maps.',
+              style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700),
+            ),
+            backgroundColor: const Color(0xFFD32F2F),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          ),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Gagal membuka Maps: $e',
+            style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700),
+          ),
+          backgroundColor: const Color(0xFFD32F2F),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        ),
+      );
+    }
+  }
+
   Widget _buildInputBar(Color themeColor) {
     return Container(
       decoration: const BoxDecoration(
@@ -1580,6 +2087,47 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
   }
 }
 
+// Custom painter untuk background peta bergaya grid di bubble lokasi
+class _MapGridPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = const Color(0xFFA5D6A7).withValues(alpha: 0.6)
+      ..strokeWidth = 1.0
+      ..style = PaintingStyle.stroke;
+
+    const spacing = 20.0;
+
+    // Garis vertikal
+    for (double x = 0; x <= size.width; x += spacing) {
+      canvas.drawLine(Offset(x, 0), Offset(x, size.height), paint);
+    }
+    // Garis horizontal
+    for (double y = 0; y <= size.height; y += spacing) {
+      canvas.drawLine(Offset(0, y), Offset(size.width, y), paint);
+    }
+
+    // Faux road lines
+    final roadPaint = Paint()
+      ..color = const Color(0xFF81C784).withValues(alpha: 0.5)
+      ..strokeWidth = 3.0
+      ..style = PaintingStyle.stroke;
+
+    canvas.drawLine(
+      Offset(size.width * 0.3, 0),
+      Offset(size.width * 0.3, size.height),
+      roadPaint,
+    );
+    canvas.drawLine(
+      Offset(0, size.height * 0.6),
+      Offset(size.width, size.height * 0.6),
+      roadPaint,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
 class FullScreenImageViewer extends StatelessWidget {
   final String imageUrl;
   final bool isStoryReply;

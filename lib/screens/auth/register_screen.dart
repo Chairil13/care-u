@@ -3,7 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 import '../user/user_main_screen.dart';
-import '../teknisi/teknisi_home_screen.dart';
+import '../teknisi/teknisi_main_screen.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -104,7 +104,7 @@ class _RegisterScreenState extends State<RegisterScreen>
       Navigator.of(context).pushAndRemoveUntil(
         MaterialPageRoute(
           builder: (_) => _selectedRole == 'teknisi'
-              ? const TeknisiHomeScreen()
+              ? const TeknisiMainScreen()
               : const UserMainScreen(),
         ),
         (route) => false,

@@ -399,21 +399,28 @@ class _ChatPlaceholderState extends State<_ChatPlaceholder> {
                               ),
                               child: IconButton(
                                 icon: const Icon(Icons.chat_bubble_rounded, color: Colors.white),
-                                onPressed: () {
-                                  Navigator.of(context).push(
+                                onPressed: () async {
+                                  await Navigator.of(context).push(
                                     MaterialPageRoute(
                                       builder: (context) => ChatDetailScreen(partner: user),
                                     ),
                                   );
+                                  // Refresh list setelah kembali dari chat
+                                  if (context.mounted) {
+                                    context.read<ChatProvider>().fetchUsers();
+                                  }
                                 },
                               ),
                             ),
-                            onTap: () {
-                              Navigator.of(context).push(
+                            onTap: () async {
+                              await Navigator.of(context).push(
                                 MaterialPageRoute(
                                   builder: (context) => ChatDetailScreen(partner: user),
                                 ),
                               );
+                              if (context.mounted) {
+                                context.read<ChatProvider>().fetchUsers();
+                              }
                             },
                           ),
                         ),
